@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="19.5" height="23.999" viewBox="0 0 19.5 23.999">
+  <g id="Interface-Essential_Alert_alarm-bell" data-name="Interface-Essential / Alert / alarm-bell" transform="translate(-497.255 -2747)">
+    <g id="Group_262" data-name="Group 262">
+      <g id="alarm-bell">
+        <path id="Shape_1189" data-name="Shape 1189" d="M505.005,2768.75a2.087,2.087,0,0,0,4.005,0" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+        <path id="Shape_1190" data-name="Shape 1190" d="M507.005,2750v-2.25" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+        <path id="Shape_1191" data-name="Shape 1191" d="M507.005,2750a7.5,7.5,0,0,1,7.5,7.5c0,7.046,1.5,8.25,1.5,8.25h-18s1.5-1.916,1.5-8.25A7.5,7.5,0,0,1,507.005,2750Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+      </g>
+    </g>
+  </g>
+</svg>

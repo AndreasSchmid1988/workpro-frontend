@@ -1,0 +1,584 @@
+openapi: 3.0.1
+info:
+  title: YieldAds API
+  version: 1.0.0
+  description: |
+    The YieldAds API is written for the [OpenAPI Specification](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md).
+    You can use this GUI to browse the api or your own [Swagger UI](https://swagger.io/tools/swagger-ui/) compatible application.
+
+    ## Endpoints
+    The API servers are available under the url: `https://api.yieldads.net/`. You have to use this url for all API Requests.
+
+    ## Authentication
+    You have to add your API-Key as header `API-Key` to all requests in your application. For authorizing your
+    requests in this GUI, you have to use the `Authorize` button below and enter your API-Key.
+    
+    ## General Information
+    We would like to inform you that our API uses a period (`.`) as the decimal separator for numeric values.
+    Please adhere to these conventions to ensure accurate input and output.
+    When viewing exported CSV data using a spreadsheet program, make sure that you set the locale to english (US/GB)
+    and to use a comma (`,`) as the field separator.
+    
+    ## Questions
+    Please contact us:
+  contact:
+    name: YieldAds Team
+    email: ""
+    url: https://yieldads.net/
+
+servers:
+  - url: https://api.yieldads.net/
+
+paths:
+  /merchants:
+    get:
+      tags:
+        - Merchant
+      summary: Merchant List Export
+      description: |
+        You can use these results to check which merchants are currently available.
+        Merchant availability can change every hour.
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/Market'
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - json
+              - csv
+            default: csv
+      responses:
+        200:
+          description: Merchant Response
+          content:
+            text/csv:
+              schema:
+                type: string
+              example: |
+                id,domain,clickUrl
+                0123456789abcdef,example.com,https://api.yieldads.net/redirect?publisherId=0123456789abcdef&market=de&target=example.com
+                fedcba9876543210,example.com,https://api.yieldads.net/redirect?publisherId=fedcba9876543210&market=de&target=example.com
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 13170
+                  merchants:
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: "0123456789abcdef"
+                        domain:
+                          type: string
+                          example: example.com
+                        clickUrl:
+                          type: string
+                          example: "https://api.yieldads.net/redirect?publisherId=0123456789abcdef&market=de&target=example.com"
+        401:
+          description: Merchant Response (Error)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: object
+                    additionalProperties:
+                      type: string
+                      example: invalid
+                    example:
+                      authorization: invalid
+
+  /merchant/status:
+    get:
+      tags:
+        - Merchant
+      summary: Request status of a single merchant
+      description: |
+        You can use this endpoint to check if a single merchant is currently active or not.
+
+        A merchant status can be requested in two ways: either by specifying the merchant id in the parameter "id"
+        or by using both parameters "market" and "target".
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - name: market
+          required: false
+          in: query
+          schema:
+            type: string
+            example: "de"
+            format: ISO 3166 Alpha-2
+        - name: target
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "example.com"
+        - name: id
+          required: false
+          in: query
+          schema:
+            type: string
+            example: "9981a510ad69954d"
+            pattern: ^[0-9a-f]{16}$
+      responses:
+        200:
+          description: Merchant Status Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+        400:
+          description: Merchant Status Response (Error)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: object
+                    additionalProperties:
+                      type: string
+                      example: invalid
+                    example:
+                      id: Expected value to be of length 16 but got 42 characters
+
+  /report/summary:
+    get:
+      tags:
+        - Reporting
+      summary: Grouped report for commissions and revenue grouped by market and merchant
+      description: |
+        Endpoint for a summary of commissions.
+        Commissions are issued based on their click date.
+        All dates used in this endpoint are in UTC.
+        The date period must be at least 1 day and no more than 31 days.
+        
+        All decimal values use a dot (`.`) as the decimal separator. For example, `0.5` is "one half".
+        A comma (`,`) is used to separate fields.
+        This is mostly relevant for the CSV format.
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/DateFrom'
+        - $ref: '#/components/parameters/DateTo'
+        - $ref: '#/components/parameters/PublisherPlacementId'
+        - $ref: '#/components/parameters/PublisherPlacementId2'
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - json
+              - csv
+            default: json
+      responses:
+        200:
+          description: Summary Report Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  currency:
+                    type: string
+                    example: EUR
+                  markets:
+                    type: object
+                    properties:
+                      < market >:
+                        type: object
+                        properties:
+                          < merchantId >:
+                            type: object
+                            properties:
+                              merchantName:
+                                type: string
+                              incomingCount:
+                                type: number
+                              openCount:
+                                type: number
+                              openAmount:
+                                type: number
+                              confirmedCount:
+                                type: number
+                              confirmedAmount:
+                                type: number
+                              paidCount:
+                                type: number
+                              paidAmount:
+                                type: number
+                              rejectedCount:
+                                type: number
+                    example:
+                      de:
+                        "0123456789abcdef":
+                          merchantName: example.com
+                          incomingCount: 1337
+                          openCount: 10
+                          openAmount: 1.311
+                          confirmedCount: 42
+                          confirmedAmount: 4.2
+                          paidCount: 77
+                          paidAmount: 7.97
+                          rejectedCount: 1
+            text/csv:
+              schema:
+                type: string
+                description: |
+                  All decimal values use a dot (`.`) as the decimal separator. For example, `0.5` is "one half".
+                  A comma (`,`) is used to separate fields.
+              example: |
+                merchantId,market,merchant,incomingCount,openCount,openAmount,confirmedCount,confirmedAmount,paidCount,paidAmount,rejectedCount,currency
+                c54720abfae3c96f,de,example.com,1337,10,1.311,42,4.2,77,7.97,1,EUR
+        401:
+          description: Summary Report Response (Error)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: object
+                    additionalProperties:
+                      type: string
+                      example: invalid
+                    example:
+                      authorization: invalid
+
+  /report/commissions:
+    get:
+      tags:
+        - Reporting
+      summary: Report with all commissions for a day
+      description: |
+        Endpoint for reporting all commissions for a day.
+        Commissions are issued based on their click date.
+        All dates used in this endpoint are in UTC.
+        
+        All decimal values use a dot (`.`) as the decimal separator. For example, `0.5` is "one half".
+        A comma (`,`) is used to separate fields.
+        This is mostly relevant for the CSV format.
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/Date'
+        - $ref: '#/components/parameters/Market'
+        - $ref: '#/components/parameters/PublisherPlacementId'
+        - $ref: '#/components/parameters/PublisherPlacementId2'
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - json
+              - csv
+            default: json
+      responses:
+        200:
+          description: Commissions Report Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    example: "2022-12-13"
+                  market:
+                    type: string
+                    example: "de"
+                  currency:
+                    type: string
+                    example: EUR
+                  commissions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        commissionId:
+                          type: string
+                        clickId:
+                          type: string
+                        clickDate:
+                          type: string
+                        modifiedDate:
+                          type: string
+                        status:
+                          type: string
+                        revenue:
+                          type: number
+                        merchant:
+                          type: string
+                        merchantId:
+                          type: string
+                        placementId:
+                          type: string
+                        placementId2:
+                          type: string
+                      example:
+                        commissionId: p10166ba2a804b53a1416122tz27750ff6sl29f79sx4kb3p543l3oq0d84hf45f
+                        clickId: g098ear6d26ue5d8952ec471d214c598d1c963c91795f1b870a5db65b8o5abed
+                        clickDate: 2022-12-13T16:43:13+00:00
+                        modifiedDate: 2022-12-14T10:11:02+00:00
+                        status: open
+                        revenue: 0.151
+                        merchant: stein-shop.de
+                        merchantId: c54720abfae3c96f
+                        placementId: bhu8t24a4fb5n70o70ov4p6j58eq3g8gz74aii8wb6ihzkmredccvvud3kvym061
+                        placementId2: secondary-5n70o70ov4p6j58eq3g8gz74aii8wb6ihzkmredccvvud3kvym061
+            text/csv:
+              schema:
+                type: string
+                description: |
+                  All decimal values use a dot (`.`) as the decimal separator. For example, `0.5` is "one half".
+                  A comma (`,`) is used to separate fields.
+              example: |
+                commissionId,clickId,clickDate,modifiedDate,status,revenue,currency,market,merchant,merchantId,placementId,placementId2
+                p10166ba2a804b53a1416122tz27750ff6sl29f79sx4kb3p543l3oq0d84hf45f,ec47g098ear6d26ue5d8952ec471d214c598d1c963c91795f1b870a5db65b8o5,2022-12-13T16:43:13+00:00,2022-12-14T10:11:02+00:00,open,0.151,EUR,de,stein-shop.de,c54720abfae3c96f,bhu8t24a4fb5n70o70ov4p6j58eq3g8gz74aii8wb6ihzkmredccvvud3kvym061,secondary-5n70o70ov4p6j58eq3g8gz74aii8wb6ihzkmredccvvud3kvym061
+        401:
+          description: Commissions Report Response (Error)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: object
+                    additionalProperties:
+                      type: string
+                      example: invalid
+                    example:
+                      authorization: invalid
+
+  /report/commissions/modified:
+    get:
+      tags:
+        - Reporting
+      summary: Report with commissions that were modified on the given day
+      description: |
+        Endpoint for reporting modified commissions for a day.
+        Commissions are issued based on their modified date.
+        All dates used in this endpoint are in UTC.
+        
+        All decimal values use a dot (`.`) as the decimal separator. For example, `0.5` is "one half".
+        A comma (`,`) is used to separate fields.
+        This is mostly relevant for the CSV format.
+      security:
+        - ApiKeyAuth: [ ]
+      parameters:
+        - $ref: '#/components/parameters/Date'
+        - $ref: '#/components/parameters/Market'
+        - $ref: '#/components/parameters/PublisherPlacementId'
+        - $ref: '#/components/parameters/PublisherPlacementId2'
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - json
+              - csv
+            default: json
+      responses:
+        200:
+          description: Modified Commissions Report Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    example: "2022-12-13"
+                  market:
+                    type: string
+                    example: "de"
+                  currency:
+                    type: string
+                    example: EUR
+                  commissions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        commissionId:
+                          type: string
+                        clickId:
+                          type: string
+                        clickDate:
+                          type: string
+                        modifiedDate:
+                          type: string
+                        status:
+                          type: string
+                        revenue:
+                          type: number
+                        merchant:
+                          type: string
+                        merchantId:
+                          type: string
+                        placementId:
+                          type: string
+                        placementId2:
+                          type: string
+                      example:
+                        commissionId: p10166ba2a804b53a1416122tz27750ff6sl29f79sx4kb3p543l3oq0d84hf45f
+                        clickId: g098ear6d26ue5d8952ec471d214c598d1c963c91795f1b870a5db65b8o5abed
+                        clickDate: 2022-12-12T16:43:13+00:00
+                        modifiedDate: 2022-12-13T13:13:32+00:00
+                        status: open
+                        revenue: 0.151
+                        merchant: stein-shop.de
+                        merchantId: c54720abfae3c96f
+                        placementId: bhu8t24a4fb5n70o70ov4p6j58eq3g8gz74aii8wb6ihzkmredccvvud3kvym061
+                        placementId2: secondary-5n70o70ov4p6j58eq3g8gz74aii8wb6ihzkmredccvvud3kvym061
+            text/csv:
+              schema:
+                type: string
+                description: |
+                  All decimal values use a dot (`.`) as the decimal separator. For example, `0.5` is "one half".
+                  A comma (`,`) is used to separate fields.
+              example: |
+                commissionId,clickId,clickDate,modifiedDate,status,revenue,currency,market,merchant,merchantId,placementId,placementId2
+                p10166ba2a804b53a1416122tz27750ff6sl29f79sx4kb3p543l3oq0d84hf45f,ec47g098ear6d26ue5d8952ec471d214c598d1c963c91795f1b870a5db65b8o5,2022-12-11T05:56:22+00:00,2022-12-13T05:56:22+00:00,open,0.151,EUR,de,stein-shop.de,c54720abfae3c96f,bhu8t24a4fb5n70o70ov4p6j58eq3g8gz74aii8wb6ihzkmredccvvud3kvym061,secondary-5n70o70ov4p6j58eq3g8gz74aii8wb6ihzkmredccvvud3kvym061
+        401:
+          description: Modified Commissions Report Response (Error)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: object
+                    additionalProperties:
+                      type: string
+                      example: invalid
+                    example:
+                      authorization: invalid
+
+  /redirect:
+    get:
+      tags:
+        - Redirect
+      summary: Redirect a client to an offer
+      description: |
+        Endpoint for redirecting users to an offer. This is just a technical explanation for the parameters involved in the redirect process.
+        
+        The intended way to use this endpoint is by acquiring valid links from the merchant endpoint.
+      parameters:
+        - $ref: '#/components/parameters/PublisherId'
+        - $ref: '#/components/parameters/PublisherPlacementId'
+        - $ref: '#/components/parameters/PublisherPlacementId2'
+        - $ref: '#/components/parameters/Market'
+        - $ref: '#/components/parameters/Target'
+      responses:
+        302:
+          description: Redirect Response
+          headers:
+            Location:
+              description: The target of the redirect
+              schema:
+                type: string
+
+components:
+  parameters:
+    PublisherId:
+      name: publisherId
+      description: Your given publisher ID provided by YieldAds.
+      in: query
+      required: true
+      schema:
+        type: string
+
+    PublisherPlacementId:
+      name: placementId
+      description: Your own custom placement ID for your click-tracking. Must be at most 64 characters long. Only alphanumeric characters and "-" are allowed. Defaults to null.
+      in: query
+      required: false
+      schema:
+        type: string
+        maxLength: 64
+        minLength: 1
+
+    PublisherPlacementId2:
+      name: placementId2
+      description: Your own custom secondary placement ID for your click-tracking. Must be at most 64 characters long. Only alphanumeric characters and "-" are allowed. Defaults to null.
+      in: query
+      required: false
+      schema:
+        type: string
+        maxLength: 64
+        minLength: 1
+
+    Market:
+      name: market
+      required: true
+      in: query
+      schema:
+        type: string
+        example: "de"
+        format: ISO 3166 Alpha-2
+
+    Target:
+      name: target
+      description: The target of the redirect.
+      required: true
+      in: query
+      schema:
+        type: string
+        example: example.com
+
+    Date:
+      name: date
+      description: Date for which to generate the report. The date is in UTC. This parameter has to be in format `YYYY-mm-dd`.
+      in: query
+      required: true
+      schema:
+        type: string
+        example: "2022-12-13"
+        pattern: "\\d{4}-\\d{2}-\\d{2}"
+
+    DateFrom:
+      name: dateFrom
+      description: Start date for which to generate the report. The date is in UTC. This parameter has to be in format `YYYY-mm-dd`.
+      in: query
+      required: true
+      schema:
+        type: string
+        example: "2022-12-13"
+        pattern: "\\d{4}-\\d{2}-\\d{2}"
+
+    DateTo:
+      name: dateTo
+      description: End date for which to generate the report. The date is in UTC. This parameter has to be in format `YYYY-mm-dd`.
+      in: query
+      required: true
+      schema:
+        type: string
+        example: "2022-12-13"
+        pattern: "\\d{4}-\\d{2}-\\d{2}"
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: API-Key
+      description: Your API-Key.
