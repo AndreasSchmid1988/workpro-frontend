@@ -18,6 +18,7 @@ export default {
     customers: 'Customers',
     projects: 'Projects',
     offers: 'Offers',
+    leadManagement: 'Leads',
   },
   salutations: {
     Mr: 'Mr.',

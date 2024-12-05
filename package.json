@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "WorkPro Handwerker Software",
   "productName": "WorkPro Admin",
-  "author": "Andreas Schmid <andreas.schmid@metavision.io>",
+  "author": "Andreas Schmid <andreas.schmid@workpro.io>",
   "private": true,
   "scripts": {
     "lint": "eslint --ext .js,.ts,.vue ./",

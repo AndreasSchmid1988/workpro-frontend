@@ -20,7 +20,8 @@ export default {
     offers: 'Angebote',
     invoices: 'Rechnungen',
     generalSettings: 'Allgemeine Einstellungen',
-    warehouseMaterialSettings: 'Lager und Material'
+    warehouseMaterialSettings: 'Lager und Material',
+    leadManagement: 'Interessenten',
   },
   salutations: {
     Mr: 'Herr',

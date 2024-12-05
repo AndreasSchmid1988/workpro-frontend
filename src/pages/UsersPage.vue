@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { onMounted } from 'vue';
-import { RequestProps, useUsersStore } from 'stores/users';
+import {onMounted} from 'vue';
+import {RequestProps, useUsersStore} from 'stores/users';
 
 const usersStore = useUsersStore();
 onMounted(() => {
@@ -52,7 +52,6 @@ function formatDateTimeIntl(date: string) {
             rowKey="id"
             :columns="usersStore.columns"
             :rows-per-page-options="[10, 25, 50, 100]"
-            row-key="id"
             v-model:pagination="usersStore.pagination"
             :loading="usersStore.loading"
             :filter="usersStore.searchTerm"
