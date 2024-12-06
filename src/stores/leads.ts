@@ -37,27 +37,11 @@ export const useLeadsStore = defineStore({
     i18n: useI18n() as Composer,
     columns: [
       {
-        name: 'id',
-        required: true,
-        label: useI18n().t('id'),
-        align: 'left',
-        field: 'id',
-        sortable: true,
-      },
-      {
         name: 'leads_number',
         required: true,
         label: useI18n().t('leadsNumber'),
         align: 'left',
         field: 'leads_number',
-        sortable: true,
-      },
-      {
-        name: 'users_id',
-        required: true,
-        label: useI18n().t('userId'),
-        align: 'left',
-        field: 'users_id',
         sortable: true,
       },
       {
@@ -141,6 +125,22 @@ export const useLeadsStore = defineStore({
         sortable: true,
       },
       {
+        name: 'lead_source',
+        required: true,
+        label: useI18n().t('leadSource'),
+        align: 'left',
+        field: 'lead_source',
+        sortable: true,
+      },
+      {
+        name: 'lead_status',
+        required: true,
+        label: useI18n().t('leadStatus'),
+        align: 'left',
+        field: 'lead_status',
+        sortable: true,
+      },
+      {
         name: 'created_at',
         required: true,
         label: useI18n().t('created'),
@@ -153,13 +153,6 @@ export const useLeadsStore = defineStore({
         label: useI18n().t('updated'),
         align: 'left',
         field: 'updated_at',
-        sortable: true,
-      },
-      {
-        name: 'deleted_at',
-        label: useI18n().t('deleted'),
-        align: 'left',
-        field: 'deleted_at',
         sortable: true,
       },
       {
@@ -216,6 +209,31 @@ export const useLeadsStore = defineStore({
         console.log(e);
         this.loading = false;
       }
+    },
+    async fetchLeadDetails(id: string) {
+      this.loading = true;
+      try {
+        const authStore = useAuthStore();
+        const leadDetailEndpoint = `/api/v1/leads/${id}`;
+        const response = await axios.get(
+          process.env.APP_API_BASE_URL + leadDetailEndpoint,
+          {
+            headers: {
+              Authorization: `Bearer ${authStore.accessToken}`,
+            },
+          }
+        );
+
+        this.lead = response.data; // Assuming the response structure contains lead details directly
+
+        this.loading = false;
+      } catch (e) {
+        console.error(`Error fetching lead details for ID ${id}:`, e);
+        this.loading = false;
+      }
+    },
+    edit: async function (id: string) {
+      this.router.push('leads/' + id);
     },
     setDarkMode(darkMode: boolean | null) {
       if (darkMode == null) {

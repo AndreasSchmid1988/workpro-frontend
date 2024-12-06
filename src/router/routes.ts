@@ -33,6 +33,10 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/UsersEditPage.vue'),
       },
       {
+        path: '/leads/:id',
+        component: () => import('pages/LeadsEditPage.vue'),
+      },
+      {
         path: '/api',
         component: () => import('pages/APIPage.vue'),
       },

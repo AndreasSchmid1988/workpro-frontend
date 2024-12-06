@@ -120,7 +120,7 @@ function formatDateTimeIntl(date: string) {
                     :props="props"
                   >
                     <template
-                      v-if="col.type === 'date' || col.name === 'created_at' || col.name === 'updated_at' || col.name === 'deleted_at'">
+                      v-if="col.type === 'date' || col.name === 'created_at' || col.name === 'updated_at'">
                       <span>
                         {{ formatDateIntl(col.value) }}
                         <q-tooltip
@@ -138,7 +138,61 @@ function formatDateTimeIntl(date: string) {
                     </template>
                   </q-td>
                   <q-td v-else :key="col.name" auto-width>
-                    <!-- Customize any actions relating to a lead here -->
+                    <div class="col-4">
+                      <q-btn
+                        flat
+                        round
+                        @click="usersStore.edit(props.row.id)"
+                        style="font-size: 0.7rem"
+                      >
+                        <q-icon>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                          >
+                            <g
+                              id="Interface-Essential_Edit_pencil-circle"
+                              data-name="Interface-Essential / Edit / pencil-circle"
+                              transform="translate(-399.005 -3091)"
+                            >
+                              <g id="Group_308" data-name="Group 308">
+                                <g id="pencil-circle">
+                                  <path
+                                    id="Shape_1444"
+                                    data-name="Shape 1444"
+                                    d="M408.751,3108.432l-3.712.531.53-3.713,7.561-7.561a2.25,2.25,0,0,1,3.182,3.182Z"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="1.5"
+                                  />
+                                  <path
+                                    id="Oval_184"
+                                    data-name="Oval 184"
+                                    d="M411.005,3114.25a11.25,11.25,0,1,0-11.25-11.25A11.25,11.25,0,0,0,411.005,3114.25Z"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="1.5"
+                                  />
+                                </g>
+                              </g>
+                            </g>
+                          </svg>
+                        </q-icon>
+                        <q-tooltip
+                          anchor="top middle"
+                          self="bottom middle"
+                          :offset="[0, 5]"
+                        >
+                          {{ $t('editUser') }}
+                        </q-tooltip>
+                      </q-btn>
+                    </div>
                   </q-td>
                 </template>
               </q-tr>
