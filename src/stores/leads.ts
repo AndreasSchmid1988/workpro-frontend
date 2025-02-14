@@ -165,6 +165,39 @@ export const useLeadsStore = defineStore({
       },
     ] as TableColumn[],
     leads: [],
+    lead: {
+      id: '',
+      leads_number: '',
+      users_id: '',
+      lead_count: 0,
+      lead_type: '',
+      lead_source: '',
+      lead_status: '',
+      created_at: '',
+      updated_at: '',
+      deleted_at: null,
+      users: {
+        id: '',
+        name: '',
+        email: '',
+        email_verified_at: '',
+        // ... (other user properties)
+        user_settings: {
+          id: '',
+          users_id: '',
+          company: '',
+          salutation: '',
+          firstname: '',
+          lastname: '',
+          mobile: '',
+          address: '',
+          postalcode: '',
+          city: '',
+          country: '',
+          // ... (other settings)
+        },
+      },
+    },
     searchTerm: '',
     pagination: {
       page: 1,
@@ -224,7 +257,7 @@ export const useLeadsStore = defineStore({
           }
         );
 
-        this.lead = response.data; // Assuming the response structure contains lead details directly
+        this.lead = response.data.data; // Assuming the response structure contains lead details directly
 
         this.loading = false;
       } catch (e) {

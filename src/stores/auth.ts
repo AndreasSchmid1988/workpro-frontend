@@ -480,19 +480,32 @@ export const useAuthStore = defineStore('auth', {
       axios.interceptors.response.use(
         (response) => response,
         async (error) => {
+          // The arrow function ensures 'this' refers to the store
           if (
             error.response &&
             error.response.status === 401 &&
-            !!this.refreshToken
+            !!this.refreshToken &&
+            !error.config.__isRetryRequest
           ) {
             try {
+              error.config.__isRetryRequest = true;
               await this.fetchRefreshToken();
-              return axios(error.config); // Retry the request
+
+              // Update Authorization header with new access token
+              error.config.headers = {
+                ...error.config.headers,
+                Authorization: `Bearer ${this.accessToken}`,
+              };
+
+              // Retry the request with the new token
+              return axios(error.config);
             } catch (err) {
               this.logout();
+              return Promise.reject(err);
             }
+          } else {
+            return Promise.reject(error);
           }
-          return Promise.reject(error);
         }
       );
     },

@@ -142,7 +142,7 @@ function formatDateTimeIntl(date: string) {
                       <q-btn
                         flat
                         round
-                        @click="usersStore.edit(props.row.id)"
+                        @click="leadsStore.edit(props.row.id)"
                         style="font-size: 0.7rem"
                       >
                         <q-icon>

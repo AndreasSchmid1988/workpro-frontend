@@ -1,23 +1,14 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { useLeadsStore } from 'stores/leads';
+import { useRoute, useRouter } from 'vue-router';
 
-// Assuming id is passed in or extracted via route params
-const leadId = ref(null);
+// Get route parameters
+const route = useRoute();
+const router = useRouter();
+const leadId = ref(route.params.id);
+
 const leadsStore = useLeadsStore();
-const leadData = ref({
-  lead_type: '',
-  lead_source: '',
-  lead_status: '',
-  personalDetails: {
-    firstname: '',
-    lastname: '',
-  },
-  contactDetails: {
-    address: '',
-    city: '',
-  },
-});
 
 // Dropdown Options
 const leadTypeOptions = [
@@ -46,12 +37,13 @@ const leadStatusOptions = [
 // Data fetching method
 const loadLeadData = async () => {
   await leadsStore.fetchLeadDetails(leadId.value);
-  leadData.value = leadsStore.lead;
 };
 
 // Data updating method
-const updateLead = () => {
-  leadsStore.updateLead(leadId.value, leadData.value);
+const updateLead = async () => {
+  await leadsStore.updateLead(leadId.value, leadsStore.lead);
+  // Navigate back to the leads list or show a success message
+  router.push('/leads');
 };
 
 onMounted(() => {
@@ -60,76 +52,108 @@ onMounted(() => {
 </script>
 
 <template>
-  <q-page>
-    <div class="q-ma-lg q-pt-md">
-      <q-form @submit.prevent="updateLead" class="q-gutter-md">
-        <q-card flat class="shadow_custom q-pa-none q-ma-none">
-          <q-card-section>
-            <div class="text-h6">{{ $t('editLead') }}</div>
-            <div class="row q-col-gutter-xs">
-              <!-- Lead Type -->
+  <q-page padding>
+    <q-form @submit.prevent="updateLead" class="q-gutter-md">
+      <q-card flat class="shadow-1">
+        <q-card-section>
+          <div class="text-h6">
+            {{ $t('editLead') }}
+          </div>
+
+          <!-- Lead Details -->
+          <div class="row q-col-gutter-md q-mt-md">
+            <div class="col-md-4 col-sm-12">
               <q-select
-                v-model="leadData.value.lead_type"
+                v-model="leadsStore.lead.lead_type"
                 :options="leadTypeOptions"
-                label="Lead Type"
+                :label="$t('leadType')"
                 outlined
                 dense
-              />
-
-              <!-- Lead Source -->
-              <q-select
-                v-model="leadData.value.lead_source"
-                :options="leadSourceOptions"
-                label="Lead Source"
-                outlined
-                dense
-              />
-
-              <!-- Lead Status -->
-              <q-select
-                v-model="leadData.value.lead_status"
-                :options="leadStatusOptions"
-                label="Lead Status"
-                outlined
-                dense
-              />
-
-              <!-- Personal Information -->
-              <q-input
-                v-model="leadData.value.personalDetails.firstname"
-                label="First Name"
-                outlined
-              />
-              <q-input
-                v-model="leadData.value.personalDetails.lastname"
-                label="Last Name"
-                outlined
-              />
-
-              <!-- Contact Details -->
-              <q-input
-                v-model="leadData.value.contactDetails.address"
-                label="Address"
-                outlined
-              />
-              <q-input
-                v-model="leadData.value.contactDetails.city"
-                label="City"
-                outlined
+                required
               />
             </div>
-          </q-card-section>
-          <q-card-actions align="right">
-            <q-btn
-              :loading="leadsStore.loading"
-              :disable="leadsStore.loading"
-              label="Save"
-              color="primary"
-              type="submit"
-            />
-          </q-card-actions>
-        </q-card>
-      </q-form>
-    </div>
+            <div class="col-md-4 col-sm-12">
+              <q-select
+                v-model="leadsStore.lead.lead_source"
+                :options="leadSourceOptions"
+                :label="$t('leadSource')"
+                outlined
+                dense
+                required
+              />
+            </div>
+            <div class="col-md-4 col-sm-12">
+              <q-select
+                v-model="leadsStore.lead.lead_status"
+                :options="leadStatusOptions"
+                :label="$t('leadStatus')"
+                outlined
+                dense
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Personal Information -->
+          <div class="text-subtitle1 q-mt-lg">
+            {{ $t('personalDetails') }}
+          </div>
+          <div class="row q-col-gutter-md q-mt-sm">
+            <div class="col-md-6 col-sm-12">
+              <q-input
+                v-model="leadsStore.lead.users.user_settings.firstname"
+                :label="$t('firstname')"
+                outlined
+                dense
+                required
+              />
+            </div>
+            <div class="col-md-6 col-sm-12">
+              <q-input
+                v-model="leadsStore.lead.users.user_settings.lastname"
+                :label="$t('lastname')"
+                outlined
+                dense
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Contact Details -->
+          <div class="text-subtitle1 q-mt-lg">
+            {{ $t('contactDetails') }}
+          </div>
+          <div class="row q-col-gutter-md q-mt-sm">
+            <div class="col-md-6 col-sm-12">
+              <q-input
+                v-model="leadsStore.lead.users.user_settings.address"
+                :label="$t('address')"
+                outlined
+                dense
+                required
+              />
+            </div>
+            <div class="col-md-6 col-sm-12">
+              <q-input
+                v-model="leadsStore.lead.users.user_settings.city"
+                :label="$t('city')"
+                outlined
+                dense
+                required
+              />
+            </div>
+          </div>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn
+            :loading="leadsStore.loading"
+            :disable="leadsStore.loading"
+            :label="$t('save')"
+            color="primary"
+            type="submit"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-form>
   </q-page>
 </template>
