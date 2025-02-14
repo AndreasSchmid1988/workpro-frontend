@@ -1,7 +1,10 @@
 <script setup>
-import { onMounted, ref } from 'vue';
-import { useLeadsStore } from 'stores/leads';
-import { useRoute, useRouter } from 'vue-router';
+import {computed, onMounted, ref} from 'vue';
+import {useLeadsStore} from 'stores/leads';
+import {useRoute, useRouter} from 'vue-router';
+import {useI18n} from 'vue-i18n';
+
+const {t} = useI18n();
 
 // Get route parameters
 const route = useRoute();
@@ -11,27 +14,28 @@ const leadId = ref(route.params.id);
 const leadsStore = useLeadsStore();
 
 // Dropdown Options
-const leadTypeOptions = [
-  { label: 'Private', value: 'private' },
-  { label: 'Company', value: 'company' },
-];
+
+const leadTypeOptions = computed(() => [
+  {label: t('private'), value: 'private'},
+  {label: t('company'), value: 'company'},
+]);
 
 const leadSourceOptions = [
-  { label: 'Website', value: 'website' },
-  { label: 'Email', value: 'email' },
-  { label: 'Phone', value: 'phone' },
-  { label: 'Facebook', value: 'facebook' },
-  { label: 'Instagram', value: 'instagram' },
-  { label: 'Twitter', value: 'twitter' },
-  { label: 'Other', value: 'other' },
+  {label: 'Website', value: 'website'},
+  {label: 'Email', value: 'email'},
+  {label: 'Phone', value: 'phone'},
+  {label: 'Facebook', value: 'facebook'},
+  {label: 'Instagram', value: 'instagram'},
+  {label: 'Twitter', value: 'twitter'},
+  {label: 'Other', value: 'other'},
 ];
 
 const leadStatusOptions = [
-  { label: 'New', value: 'new' },
-  { label: 'Contacted', value: 'contacted' },
-  { label: 'Qualified', value: 'qualified' },
-  { label: 'Lost', value: 'lost' },
-  { label: 'Converted', value: 'converted' },
+  {label: t('leadStatuses.new'), value: 'new'},
+  {label: t('leadStatuses.contacted'), value: 'contacted'},
+  {label: t('leadStatuses.qualified'), value: 'qualified'},
+  {label: t('leadStatuses.lost'), value: 'lost'},
+  {label: t('leadStatuses.converted'), value: 'converted'},
 ];
 
 // Data fetching method
@@ -41,9 +45,9 @@ const loadLeadData = async () => {
 
 // Data updating method
 const updateLead = async () => {
-  await leadsStore.updateLead(leadId.value, leadsStore.lead);
+  // await leadsStore.updateLead(leadId.value, leadsStore.lead);
   // Navigate back to the leads list or show a success message
-  router.push('/leads');
+  //await router.push('/leads');
 };
 
 onMounted(() => {
@@ -53,7 +57,7 @@ onMounted(() => {
 
 <template>
   <q-page padding>
-    <q-form @submit.prevent="updateLead" class="q-gutter-md">
+    <q-form @submit.prevent="updateLead" class="q-gutter-md q-mt-md">
       <q-card flat class="shadow-1">
         <q-card-section>
           <div class="text-h6">
@@ -62,7 +66,7 @@ onMounted(() => {
 
           <!-- Lead Details -->
           <div class="row q-col-gutter-md q-mt-md">
-            <div class="col-md-4 col-sm-12">
+            <div class="col-md-4 col-12">
               <q-select
                 v-model="leadsStore.lead.lead_type"
                 :options="leadTypeOptions"
@@ -70,9 +74,11 @@ onMounted(() => {
                 outlined
                 dense
                 required
+                emit-value
+                map-options
               />
             </div>
-            <div class="col-md-4 col-sm-12">
+            <div class="col-md-4 col-12">
               <q-select
                 v-model="leadsStore.lead.lead_source"
                 :options="leadSourceOptions"
@@ -80,9 +86,11 @@ onMounted(() => {
                 outlined
                 dense
                 required
+                emit-value
+                map-options
               />
             </div>
-            <div class="col-md-4 col-sm-12">
+            <div class="col-md-4 col-12">
               <q-select
                 v-model="leadsStore.lead.lead_status"
                 :options="leadStatusOptions"
@@ -90,6 +98,8 @@ onMounted(() => {
                 outlined
                 dense
                 required
+                emit-value
+                map-options
               />
             </div>
           </div>
@@ -99,7 +109,7 @@ onMounted(() => {
             {{ $t('personalDetails') }}
           </div>
           <div class="row q-col-gutter-md q-mt-sm">
-            <div class="col-md-6 col-sm-12">
+            <div class="col-md-6 col-12">
               <q-input
                 v-model="leadsStore.lead.users.user_settings.firstname"
                 :label="$t('firstname')"
@@ -108,7 +118,7 @@ onMounted(() => {
                 required
               />
             </div>
-            <div class="col-md-6 col-sm-12">
+            <div class="col-md-6 col-12">
               <q-input
                 v-model="leadsStore.lead.users.user_settings.lastname"
                 :label="$t('lastname')"
@@ -124,7 +134,7 @@ onMounted(() => {
             {{ $t('contactDetails') }}
           </div>
           <div class="row q-col-gutter-md q-mt-sm">
-            <div class="col-md-6 col-sm-12">
+            <div class="col-md-6 col-12">
               <q-input
                 v-model="leadsStore.lead.users.user_settings.address"
                 :label="$t('address')"
@@ -133,7 +143,7 @@ onMounted(() => {
                 required
               />
             </div>
-            <div class="col-md-6 col-sm-12">
+            <div class="col-md-6 col-12">
               <q-input
                 v-model="leadsStore.lead.users.user_settings.city"
                 :label="$t('city')"
