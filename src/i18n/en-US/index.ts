@@ -25,6 +25,7 @@ export default {
     Mrs: 'Mrs.',
     Diverse: 'Diverse',
   },
+  title: 'Title',
   login: {
     first: 'Optimize your workflows and projects with our user-friendly interface',
     second: 'Keep track of your orders and customer information anytime, anywhere',

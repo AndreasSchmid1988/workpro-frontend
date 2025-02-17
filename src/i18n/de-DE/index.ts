@@ -28,6 +28,7 @@ export default {
     Mrs: 'Frau',
     Diverse: 'Divers',
   },
+  title: 'Titel',
   login: {
     first: 'Optimieren Sie Ihre Arbeitsabläufe und Projekte mit unserer benutzerfreundlichen Schnittstelle',
     second: 'Behalten Sie Ihre Aufträge und Kundeninformationen jederzeit und überall im Blick',
