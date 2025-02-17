@@ -1,3 +1,62 @@
+<script setup>
+import { ref, onMounted, defineEmits } from 'vue';
+import { useAuthStore } from 'stores/auth';
+import NotificationDropdownComponent from 'components/notification/NotificationDropdownComponent.vue';
+import OverlayHint from 'components/OverlayHint.vue';
+import { useUsersStore } from 'stores/users';
+
+import { useQuasar } from 'quasar';
+import langDe from 'quasar/lang/de';
+import { useResetStore } from 'src/utils/resetStore';
+
+// Components registration
+const components = { NotificationDropdownComponent, OverlayHint };
+
+// Setup composition API
+const resetStore = useResetStore();
+const miniState = ref(false);
+const authStore = useAuthStore();
+const userStore = useUsersStore();
+const $q = useQuasar();
+
+const drawer = ref(false);
+const atTheBottom = ref(true);
+
+const getScrollHeight = () => {
+  const scrollElement = document.querySelector('#mainScrollArea > .q-scrollarea__container');
+  return scrollElement?.scrollHeight;
+};
+
+const handleScroll = (event) => {
+  const { position } = event;
+  atTheBottom.value = (getScrollHeight() - $q.screen.height - position.top) <= 0;
+};
+
+const drawerClick = (e) => {
+  if (miniState.value) {
+    miniState.value = false;
+    e.stopPropagation();
+  }
+};
+
+const logout = () => {
+  resetStore.all();
+  authStore.logout();
+};
+
+// Run on component mounted
+onMounted(() => {
+  if ($q.lang.getLocale() === 'de-DE') {
+    $q.lang.set(langDe);
+  }
+  authStore.setupAxiosInterceptors();
+  authStore.userInfo();
+});
+
+// Use defineEmits if any custom events are emitted
+</script>
+
+
 <template>
   <q-layout view="lHh LpR lFf">
     <q-header
@@ -625,10 +684,16 @@
         <div class="col">
           <div class="full-height">
             <q-scroll-area
+              id="mainScrollArea"
+              ref="mainScrollArea"
               class="col q-pr-sm q-scrollarea--only-vertical full-height"
+              :class="{'scroll-bottom': atTheBottom}"
               visible
             >
+              <q-scroll-observer @scroll="handleScroll" axis="vertical" debounce="100"></q-scroll-observer>
+
               <router-view />
+
             </q-scroll-area>
           </div>
         </div>
@@ -638,58 +703,6 @@
     <OverlayHint></OverlayHint>
   </q-layout>
 </template>
-
-<script>
-import { ref } from 'vue';
-import { useAuthStore } from 'stores/auth';
-import NotificationDropdownComponent from 'components/notification/NotificationDropdownComponent.vue';
-import OverlayHint from 'components/OverlayHint.vue';
-import { useUsersStore } from 'stores/users';
-
-import { useQuasar } from 'quasar';
-import langDe from 'quasar/lang/de';
-import { useResetStore } from 'src/utils/resetStore';
-
-export default {
-  components: { NotificationDropdownComponent, OverlayHint },
-  setup() {
-    const resetStore = useResetStore();
-    const miniState = ref(false);
-    const authStore = useAuthStore();
-    const userStore = useUsersStore();
-    const $q = useQuasar();
-
-    if ($q.lang.getLocale() === 'de-DE') {
-      $q.lang.set(langDe);
-    }
-
-    authStore.setupAxiosInterceptors();
-    authStore.userInfo();
-    return {
-      drawer: ref(false),
-      miniState,
-      authStore,
-      userStore,
-      drawerClick(e) {
-        // if in "mini" state and user
-        // click on drawer, we switch it to "normal" mode
-        if (miniState.value) {
-          miniState.value = false;
-
-          // notice we have registered an event with capture flag;
-          // we need to stop further propagation as this click is
-          // intended for switching drawer to "normal" mode only
-          e.stopPropagation();
-        }
-      },
-      logout() {
-        resetStore.all();
-        authStore.logout();
-      },
-    };
-  },
-};
-</script>
 
 <style>
 body {

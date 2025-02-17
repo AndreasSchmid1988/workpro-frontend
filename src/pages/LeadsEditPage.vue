@@ -3,6 +3,8 @@ import {computed, onMounted, ref} from 'vue';
 import {useLeadsStore} from 'stores/leads';
 import {useRoute} from 'vue-router';
 import {useI18n} from 'vue-i18n';
+import {Notify} from 'quasar';
+import SaveCreate from 'components/SaveCreateComponent.vue';
 
 const {t} = useI18n();
 
@@ -11,6 +13,17 @@ const route = useRoute();
 const leadId = ref(route.params.id);
 
 const leadsStore = useLeadsStore();
+
+
+const chatMessage = ref('');
+
+const sendMessage = () => {
+  if (chatMessage.value.trim()) {
+    // Logic to send the message goes here
+    console.log('Message sent:', chatMessage.value);
+    chatMessage.value = ''; // Clear the input after sending
+  }
+};
 
 // Dropdown Options
 const leadTypeOptions = computed(() => [
@@ -52,6 +65,11 @@ const updateLead = async () => {
   // await leadsStore.updateLead(leadId.value, leadsStore.lead);
   // Navigate back to the leads list or show a success message
   //await router.push('/leads');
+  Notify.create({
+    message: t('message.leadSaved'),
+    color: 'positive',
+    position: 'top',
+  });
 };
 
 onMounted(() => {
@@ -199,7 +217,7 @@ onMounted(() => {
                     </div>
                   </div>
                 </q-card-section>
-                <q-card-actions align="center">
+<!--                <q-card-actions align="center">
                   <q-btn
                     :loading="leadsStore.loading"
                     :disable="leadsStore.loading"
@@ -207,10 +225,9 @@ onMounted(() => {
                     color="primary"
                     type="submit"
                   />
-                </q-card-actions>
+                </q-card-actions>-->
               </q-card>
             </q-form>
-
           </div>
           <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
             <q-form @submit.prevent="updateLead" class="q-gutter-md q-mt-md">
@@ -269,7 +286,7 @@ onMounted(() => {
                     </div>
                   </div>
                 </q-card-section>
-                <q-card-actions align="center">
+<!--                <q-card-actions align="center">
                   <q-btn
                     :loading="leadsStore.loading"
                     :disable="leadsStore.loading"
@@ -277,6 +294,75 @@ onMounted(() => {
                     color="primary"
                     type="submit"
                   />
+                </q-card-actions>-->
+              </q-card>
+            </q-form>
+          </div>
+          <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+            <q-form @submit.prevent="updateLead" class="q-gutter-md q-mt-md">
+              <q-card flat class="shadow-1">
+                <q-card-section>
+                  <div class="text-h6">
+                    {{ $t('leadChat') }}
+                  </div>
+                  <!--  Lead Chat -->
+                  <div class="row q-col-gutter-md q-mt-md">
+                      <q-scroll-area class="col-12"
+                        style="height: 200px;"
+                      >
+
+                        <q-chat-message
+                          name="me"
+                          avatar="https://cdn.quasar.dev/img/avatar3.jpg"
+                          stamp="7 minutes ago"
+                          sent
+                          text-color="white"
+                          bg-color="primary"
+                        >
+                          <div>
+                            Hey there!
+                          </div>
+
+                          <div>
+                            Have you seen Quasar?
+                            <img src="https://cdn.quasar.dev/img/discord-omq.png" class="my-emoticon">
+                          </div>
+                        </q-chat-message>
+
+                        <q-chat-message
+                          name="Jane"
+                          avatar="https://cdn.quasar.dev/img/avatar5.jpg"
+                          bg-color="amber"
+                        >
+                          <q-spinner-dots size="2rem" />
+                        </q-chat-message>
+                      </q-scroll-area>
+                  </div>
+                </q-card-section>
+                <q-card-section>
+                  <div class="row q-col-gutter-md q-mt-md">
+                    <div class=" col-12">
+                      <q-input
+                        v-model="chatMessage"
+                        placeholder="Enter your message..."
+                        outlined
+                        dense
+                      >
+                        <template v-slot:append>
+                          <q-btn
+                            :disable="!chatMessage"
+                            color="primary"
+                            @click="sendMessage"
+                            icon="send"
+                            flat rounded
+                          />
+                        </template>
+                      </q-input>
+                    </div>
+                  </div>
+                </q-card-section>
+                <q-card-actions align="left">
+
                 </q-card-actions>
               </q-card>
             </q-form>
@@ -284,5 +370,18 @@ onMounted(() => {
         </div>
       </div>
     </q-pull-to-refresh>
+
   </q-page>
+
+  <div class="row q-gutter-x-md justify-center">
+    <SaveCreate :path="'/leads'" :id="leadId.toString()" :loading="leadsStore.loading" @save-button-clicked="updateLead" />
+  </div>
+
 </template>
+
+<style lang="sass">
+.my-emoticon
+  vertical-align: middle
+  height: 2em
+  width: 2em
+</style>

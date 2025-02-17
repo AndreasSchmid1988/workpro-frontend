@@ -247,5 +247,9 @@ export default {
     qualified: 'Qualifiziert',
     lost: 'Verloren',
     converted: 'Konvertiert',
-  }
+  },
+  saveActions: {
+    save: 'Speichern',
+    cancel: 'Abbrechen',
+  },
 };
