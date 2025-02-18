@@ -240,7 +240,8 @@ export default {
   leadSource: 'Lead-Quelle',
   leadStatus: 'Lead-Status',
   personalDetails: 'Persönliche Details',
-  contactDetails: 'Kontaktdetails',
+  contactDetails: 'Kontakt',
+  leadAddress: 'Adressdetails',
   leadStatuses: {
     new: 'Neu',
     contacted: 'Kontaktiert',
@@ -252,4 +253,13 @@ export default {
     save: 'Speichern',
     cancel: 'Abbrechen',
   },
+  leadInformation: 'Interessenten Informationen',
+  leadChat: 'Interessenten Chat',
+  enterYourMessage: 'Gib deine Nachricht ein',
+  revenuePotential: 'Umsatzpotenzial',
+  leadMessage: 'Interessenten Nachricht',
+  leadAttachments: 'Anhänge',
+  postalcode: 'Postleitzahl',
+  leadCount: 'Interessenten Nummer',
+
 };

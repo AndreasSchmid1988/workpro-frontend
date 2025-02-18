@@ -72,6 +72,7 @@ export const useAuthStore = defineStore('auth', {
     accessToken: LocalStorage.getItem('accessToken'),
     refreshToken: LocalStorage.getItem('refreshToken'),
     user: {
+      id: '',
       active: false,
       hasOpenRequests: false,
       roles: [],
@@ -559,6 +560,7 @@ export const useAuthStore = defineStore('auth', {
         publisherName: '',
         remember_me: null,
         user: {
+          id: '',
           active: false,
           roles: [],
           user_settings: {

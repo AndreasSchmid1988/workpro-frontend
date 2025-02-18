@@ -198,6 +198,7 @@ export const useLeadsStore = defineStore({
           postalcode: '',
           city: '',
           country: '',
+          profile_photo_path: '',
           // ... (other settings)
         },
       },

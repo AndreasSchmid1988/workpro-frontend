@@ -232,13 +232,24 @@ export default {
   leadSource: 'Lead Source',
   leadStatus: 'Lead Status',
   personalDetails: 'Personal Details',
-  contactDetails: 'Contact Details',
+  contactDetails: 'Contact',
+  leadAddress: 'Address Details',
   leadStatuses: {
     new: 'New',
     contacted: 'Contacted',
     qualified: 'Qualified',
     lost: 'Lost',
     converted: 'Converted',
-  }
-
+  },
+  saveActions: {
+    save: 'Save',
+    cancel: 'Cancel',
+  },
+  leadInformation: 'Lead Information',
+  leadChat: 'Lead Chat',
+  enterYourMessage: 'Enter your message',
+  revenuePotential: 'Revenue Potential',
+  leadMessage: 'Lead Message',
+  leadAttachments: 'Attachments',
+  postalcode: 'Postal Code',
 };

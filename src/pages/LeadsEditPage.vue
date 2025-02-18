@@ -5,6 +5,9 @@ import {useRoute} from 'vue-router';
 import {useI18n} from 'vue-i18n';
 import {Notify} from 'quasar';
 import SaveCreate from 'components/SaveCreateComponent.vue';
+import {useChatsStore} from 'stores/chats';
+import {useAuthStore} from 'stores/auth';
+import moment from 'moment';
 
 const {t} = useI18n();
 
@@ -13,15 +16,41 @@ const route = useRoute();
 const leadId = ref(route.params.id);
 
 const leadsStore = useLeadsStore();
+const chatsStore = useChatsStore(); // Initialize the chats store
+const authStore = useAuthStore(); // Initialize the auth store
 
+const attachments = ref([]);
+
+function fetchAttachments() {
+  // Simulating an API call for demonstration
+  attachments.value = [
+    { name: 'File 1', url: '/path/to/file1' },
+    { name: 'File 2', url: '/path/to/file2' },
+    { name: 'File 3', url: '/path/to/file3' }
+  ];
+}
+
+const formatTimestamp = (timestamp) => {
+  return moment(timestamp).format('DD.MM.YYYY HH:mm');
+};
 
 const chatMessage = ref('');
 
-const sendMessage = () => {
+const sendMessage = async () => {
   if (chatMessage.value.trim()) {
-    // Logic to send the message goes here
-    console.log('Message sent:', chatMessage.value);
-    chatMessage.value = ''; // Clear the input after sending
+    try {
+      // Use the createChat action to send a chat message
+      await chatsStore.createChat({
+        subject_uuid: leadId.value, // Subject ID corresponds to leadId in this context
+        users_id: authStore.user.id, // You may need to replace 'currentUser' with the actual user ID
+        message: chatMessage.value
+      });
+
+      console.log('Message sent:', chatMessage.value);
+      chatMessage.value = ''; // Clear the input after sending
+    } catch (error) {
+      console.error('Could not send message:', error);
+    }
   }
 };
 
@@ -60,6 +89,10 @@ const loadLeadData = async () => {
   await leadsStore.fetchLeadDetails(leadId.value);
 };
 
+// Also load chats for the lead
+const loadLeadChats = async () => {
+  await chatsStore.fetchChats( leadId.value ); // Pass the leadId to fetch chats related to the lead
+};
 // Data updating method
 const updateLead = async () => {
   // await leadsStore.updateLead(leadId.value, leadsStore.lead);
@@ -73,7 +106,9 @@ const updateLead = async () => {
 };
 
 onMounted(() => {
+  fetchAttachments();
   loadLeadData();
+  loadLeadChats();
 });
 </script>
 
@@ -82,12 +117,13 @@ onMounted(() => {
     <q-pull-to-refresh :disable="!$q.platform.is.mobile" @refresh="loadLeadData">
       <div class="q-ma-lg q-pt-md">
         <div class="row q-col-gutter-md">
+          <!--  Lead Rating and Infos -->
           <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
-            <q-form @submit.prevent="updateLead" class="q-gutter-md q-mt-md">
+            <div class="q-gutter-md q-mt-md">
               <q-card flat class="shadow-1">
                 <q-card-section>
                   <div class="text-h6">
-                    {{ $t('editLead') }}
+                    {{ $t('leadInformation') }}
                   </div>
                   <!-- Lead Details -->
                   <div class="row q-col-gutter-md q-mt-md">
@@ -128,6 +164,108 @@ onMounted(() => {
                       />
                     </div>
                   </div>
+
+                  <div class="text-subtitle1 q-mt-lg">
+                    {{ $t('revenuePotential') }}
+                  </div>
+                  <div class="row q-col-gutter-md q-mt-sm">
+                    <div class="col-12">
+                      <q-rating
+                        v-model="leadsStore.lead.rating"
+                        max="5"
+                        size="2em"
+                        color="primary"
+                        icon="star_border"
+                        icon-selected="star"
+                        icon-half="star_half"
+                        no-dimming
+                      />
+                    </div>
+                  </div>
+
+                  <div class="text-subtitle1 q-mt-lg">
+                    {{ $t('leadMessage') }}
+                  </div>
+                  <div class="row q-col-gutter-md q-mt-md">
+                    <div class="col-12">
+                      <q-input
+                        v-model="leadsStore.lead.subject"
+                        :label="$t('subject')"
+                        outlined
+                        dense
+                        required
+                      />
+                    </div>
+                    <div class=" col-12">
+                      <q-editor
+                        v-model="leadsStore.lead.message"
+                        :definitions="{
+/*                          save: {
+                            tip: 'Save your work',
+                            icon: 'save',
+                            label: 'Save',
+                            handler: saveWork
+                          },
+                          upload: {
+                            tip: 'Upload to cloud',
+                            icon: 'cloud_upload',
+                            label: 'Upload',
+                            handler: uploadIt
+                          }*/
+                        }"
+                        :toolbar="[
+                          ['bold', 'italic', 'strike', 'underline'],
+                          ['upload', 'save']
+                        ]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div class="text-subtitle1 q-mt-lg">
+                      {{ $t('leadAttachments') }}
+                    </div>
+                    <div class="row q-col-gutter-md q-mt-md">
+                      <div class="col-12">
+                        <q-list bordered class="attachment-list">
+                          <q-item v-for="(attachment, index) in attachments" :key="index" clickable>
+                            <q-item-section avatar>
+                              <q-icon name="insert_drive_file" />
+                            </q-item-section>
+                            <q-item-section>
+                              <q-item-label>{{ attachment.name }}</q-item-label>
+                            </q-item-section>
+                            <q-item-section side>
+                              <q-btn flat round dense icon="file_download" :href="attachment.url" target="_blank" />
+                            </q-item-section>
+                          </q-item>
+                        </q-list>
+                      </div>
+                    </div>
+                  </div>
+
+                </q-card-section>
+                <!--                <q-card-actions align="center">
+                                  <q-btn
+                                    :loading="leadsStore.loading"
+                                    :disable="leadsStore.loading"
+                                    :label="$t('save')"
+                                    color="primary"
+                                    type="submit"
+                                  />
+                                </q-card-actions>-->
+              </q-card>
+            </div>
+          </div>
+          <!-- Lead Details -->
+          <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+            <div class="q-gutter-md q-mt-md">
+              <q-card flat class="shadow-1">
+                <q-card-section>
+                  <div class="text-h6">
+                    {{ $t('contactDetails') }}
+                  </div>
+
                   <!-- Personal Information -->
                   <div class="text-subtitle1 q-mt-lg">
                     {{ $t('personalDetails') }}
@@ -174,9 +312,9 @@ onMounted(() => {
                       />
                     </div>
                   </div>
-                  <!-- Contact Details -->
+                  <!-- Address Details -->
                   <div class="text-subtitle1 q-mt-lg">
-                    {{ $t('contactDetails') }}
+                    {{ $t('leadAddress') }}
                   </div>
                   <div class="row q-col-gutter-md q-mt-sm">
                     <div class="col-md-12 col-12">
@@ -217,136 +355,53 @@ onMounted(() => {
                     </div>
                   </div>
                 </q-card-section>
-<!--                <q-card-actions align="center">
-                  <q-btn
-                    :loading="leadsStore.loading"
-                    :disable="leadsStore.loading"
-                    :label="$t('save')"
-                    color="primary"
-                    type="submit"
-                  />
-                </q-card-actions>-->
+                <!--                <q-card-actions align="center">
+                                  <q-btn
+                                    :loading="leadsStore.loading"
+                                    :disable="leadsStore.loading"
+                                    :label="$t('save')"
+                                    color="primary"
+                                    type="submit"
+                                  />
+                                </q-card-actions>-->
               </q-card>
-            </q-form>
+            </div>
           </div>
+          <!-- Lead Chat -->
           <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
-            <q-form @submit.prevent="updateLead" class="q-gutter-md q-mt-md">
-              <q-card flat class="shadow-1">
-                <q-card-section>
-                  <div class="text-h6">
-                    {{ $t('leadInformation') }}
-                  </div>
-                  <!--  Lead Rating and Infos -->
-                  <div class="row q-col-gutter-md q-mt-md">
-
-                    <div class="col-12">
-                      <q-label class="q-mr-sm">{{ $t('revenuePotential') }}</q-label>
-                      <q-rating
-                        v-model="leadsStore.lead.rating"
-                        max="5"
-                        size="3em"
-                        color="gyellow"
-                        icon="star_border"
-                        icon-selected="star"
-                        icon-half="star_half"
-                        no-dimming
-                      />
-                    </div>
-                    <div class="col-12">
-                      <q-input
-                        v-model="leadsStore.lead.subject"
-                        :label="$t('subject')"
-                        outlined
-                        dense
-                        required
-                      />
-                    </div>
-                    <div class=" col-12">
-                      <q-editor
-                        v-model="leadsStore.lead.message"
-                        :definitions="{
-                          save: {
-                            tip: 'Save your work',
-                            icon: 'save',
-                            label: 'Save',
-                            handler: saveWork
-                          },
-                          upload: {
-                            tip: 'Upload to cloud',
-                            icon: 'cloud_upload',
-                            label: 'Upload',
-                            handler: uploadIt
-                          }
-                        }"
-                                          :toolbar="[
-                          ['bold', 'italic', 'strike', 'underline'],
-                          ['upload', 'save']
-                        ]"
-                      />
-                    </div>
-                  </div>
-                </q-card-section>
-<!--                <q-card-actions align="center">
-                  <q-btn
-                    :loading="leadsStore.loading"
-                    :disable="leadsStore.loading"
-                    :label="$t('save')"
-                    color="primary"
-                    type="submit"
-                  />
-                </q-card-actions>-->
-              </q-card>
-            </q-form>
-          </div>
-          <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
-            <q-form @submit.prevent="updateLead" class="q-gutter-md q-mt-md">
+            <div class="q-gutter-md q-mt-md">
               <q-card flat class="shadow-1">
                 <q-card-section>
                   <div class="text-h6">
                     {{ $t('leadChat') }}
                   </div>
-                  <!--  Lead Chat -->
+                  <!-- Display chat messages -->
                   <div class="row q-col-gutter-md q-mt-md">
-                      <q-scroll-area class="col-12"
-                        style="height: 200px;"
+                    <q-scroll-area class="col-12" style="height: 200px;">
+                      <q-chat-message
+                        v-for="chat in chatsStore.chats"
+                        :key="chat.id"
+                        :name="chat.users.user_settings.firstname + ' ' + chat.users.user_settings.lastname"
+                        :avatar="chat.users.profile_photo_path"
+                        :stamp="formatTimestamp(chat.created_at)"
+                        text-color="white"
+                        bg-color="primary"
                       >
-
-                        <q-chat-message
-                          name="me"
-                          avatar="https://cdn.quasar.dev/img/avatar3.jpg"
-                          stamp="7 minutes ago"
-                          sent
-                          text-color="white"
-                          bg-color="primary"
-                        >
-                          <div>
-                            Hey there!
-                          </div>
-
-                          <div>
-                            Have you seen Quasar?
-                            <img src="https://cdn.quasar.dev/img/discord-omq.png" class="my-emoticon">
-                          </div>
-                        </q-chat-message>
-
-                        <q-chat-message
-                          name="Jane"
-                          avatar="https://cdn.quasar.dev/img/avatar5.jpg"
-                          bg-color="amber"
-                        >
-                          <q-spinner-dots size="2rem" />
-                        </q-chat-message>
-                      </q-scroll-area>
+                        <div>{{ chat.message }}</div>
+                      </q-chat-message>
+                    </q-scroll-area>
                   </div>
                 </q-card-section>
                 <q-card-section>
                   <div class="row q-col-gutter-md q-mt-md">
-                    <div class=" col-12">
+                    <div class="col-12">
                       <q-input
                         v-model="chatMessage"
-                        placeholder="Enter your message..."
+                        :placeholder="$t('enterYourMessage')"
                         outlined
                         dense
+                        @keyup.enter="sendMessage"
+                        :disable="chatsStore.loading"
                       >
                         <template v-slot:append>
                           <q-btn
@@ -354,27 +409,26 @@ onMounted(() => {
                             color="primary"
                             @click="sendMessage"
                             icon="send"
-                            flat rounded
+                            flat
+                            rounded
+                            :loading="chatsStore.loading"
                           />
                         </template>
                       </q-input>
                     </div>
                   </div>
                 </q-card-section>
-                <q-card-actions align="left">
-
-                </q-card-actions>
               </q-card>
-            </q-form>
+            </div>
           </div>
         </div>
       </div>
     </q-pull-to-refresh>
-
   </q-page>
 
   <div class="row q-gutter-x-md justify-center">
-    <SaveCreate :path="'/leads'" :id="leadId.toString()" :loading="leadsStore.loading" @save-button-clicked="updateLead" />
+    <SaveCreate :path="'/leads'" :id="leadId.toString()" :loading="leadsStore.loading"
+                @save-button-clicked="updateLead"/>
   </div>
 
 </template>
@@ -384,4 +438,17 @@ onMounted(() => {
   vertical-align: middle
   height: 2em
   width: 2em
+
+.rating-container
+  display: flex
+  flex-direction: column
+  align-items: start
+
+</style>
+
+<style scoped>
+.attachment-list {
+
+  margin: auto;
+}
 </style>
