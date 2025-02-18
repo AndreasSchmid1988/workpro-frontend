@@ -123,7 +123,7 @@ export default {
   company: 'Firma',
   address: 'Adresse',
   zip: 'PLZ',
-  mobile: 'Telefon',
+  mobile: 'Mobil',
   country: 'Land',
   enterSalutation: 'Anrede auswählen',
   enterCompany: 'Firmenname eingeben',
@@ -261,5 +261,8 @@ export default {
   leadAttachments: 'Anhänge',
   postalcode: 'Postleitzahl',
   leadCount: 'Interessenten Nummer',
+  leadsNumber: 'ID',
+  subject: 'Betreff',
+  message: 'Nachricht',
 
 };

@@ -8,6 +8,7 @@ import SaveCreate from 'components/SaveCreateComponent.vue';
 import {useChatsStore} from 'stores/chats';
 import {useAuthStore} from 'stores/auth';
 import moment from 'moment';
+import CountrySelector from 'components/CountrySelector.vue';
 
 const {t} = useI18n();
 
@@ -311,6 +312,33 @@ onMounted(() => {
                         required
                       />
                     </div>
+                    <div class="col-md-6 col-12">
+                      <q-input
+                        v-model="leadsStore.lead.users.user_settings.phone"
+                        :label="$t('phone')"
+                        outlined
+                        dense
+                        required
+                      />
+                    </div>
+                    <div class="col-md-6 col-12">
+                      <q-input
+                        v-model="leadsStore.lead.users.user_settings.mobile"
+                        :label="$t('mobile')"
+                        outlined
+                        dense
+                        required
+                      />
+                    </div>
+                    <div class="col-md-6 col-12">
+                      <q-input
+                        v-model="leadsStore.lead.users.email"
+                        :label="$t('email')"
+                        outlined
+                        dense
+                        required
+                      />
+                    </div>
                   </div>
                   <!-- Address Details -->
                   <div class="text-subtitle1 q-mt-lg">
@@ -345,12 +373,8 @@ onMounted(() => {
                       />
                     </div>
                     <div class="col-md-6 col-12">
-                      <q-input
+                      <CountrySelector
                         v-model="leadsStore.lead.users.user_settings.country"
-                        :label="$t('country')"
-                        outlined
-                        dense
-                        required
                       />
                     </div>
                   </div>

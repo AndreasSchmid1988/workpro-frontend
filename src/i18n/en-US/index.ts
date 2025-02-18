@@ -117,7 +117,7 @@ export default {
   company: 'Company',
   address: 'Address',
   zip: 'ZIP Code',
-  mobile: 'Phone',
+  mobile: 'Mobile',
   country: 'Country',
   enterSalutation: 'select salutation',
   enterCompany: 'Enter Company Name',
@@ -252,4 +252,8 @@ export default {
   leadMessage: 'Lead Message',
   leadAttachments: 'Attachments',
   postalcode: 'Postal Code',
+  leadCount: 'Interessenten Number',
+  leadsNumber: 'ID',
+  subject: 'Subject',
+  message: 'Message',
 };

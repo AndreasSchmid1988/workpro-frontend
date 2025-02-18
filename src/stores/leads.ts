@@ -45,6 +45,14 @@ export const useLeadsStore = defineStore({
         sortable: true,
       },
       {
+        name: 'lead_count',
+        required: true,
+        label: useI18n().t('leadCount'),
+        align: 'left',
+        field: 'lead_count',
+        sortable: true,
+      },
+      {
         name: 'title',
         required: true,
         label: useI18n().t('title'),
@@ -106,14 +114,6 @@ export const useLeadsStore = defineStore({
         label: useI18n().t('country'),
         align: 'left',
         field: (row: any) => row.users?.user_settings?.country || '',
-        sortable: true,
-      },
-      {
-        name: 'lead_count',
-        required: true,
-        label: useI18n().t('leadCount'),
-        align: 'left',
-        field: 'lead_count',
         sortable: true,
       },
       {
@@ -194,6 +194,7 @@ export const useLeadsStore = defineStore({
           firstname: '',
           lastname: '',
           mobile: '',
+          phone: '',
           address: '',
           postalcode: '',
           city: '',
