@@ -5,6 +5,8 @@ export default {
   messages: {
     failed: 'Action failed',
     success: 'Action was successful',
+    leadSaved: 'Lead has been successfully saved',
+    errorUpdatingLead: 'An error occurred while saving the lead',
   },
   nav: {
     dashboard: 'Dashboard',
@@ -53,7 +55,6 @@ export default {
   share: 'of total share',
   market: 'Market',
   shop: 'Shop',
-  selectCountry: 'Select market',
   commissionOverview: 'Commission overview',
   overallClicks: 'Overall clicks',
   searchTable: 'Browse table...',
@@ -261,5 +262,6 @@ export default {
   fileUploadHint: 'Drag and drop files here, or click to select',
   fileUploadHintDropActive: 'Drop the file to upload',
   noAttachments: 'No attachments',
+  selectCountry: 'Select a country',
 
 };

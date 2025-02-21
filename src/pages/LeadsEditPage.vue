@@ -21,6 +21,9 @@ const leadsStore = useLeadsStore();
 const chatsStore = useChatsStore(); // Initialize the chats store
 const authStore = useAuthStore(); // Initialize the auth store
 
+const countryError = ref(false); // or a computed property based on specific logic
+const countryErrorMessage = ref(''); // or a computed property returning the actual error message
+
 const formatTimestamp = (timestamp) => {
   return moment(timestamp).format('DD.MM.YYYY HH:mm');
 };
@@ -82,18 +85,12 @@ const loadLeadData = async () => {
 
 // Also load chats for the lead
 const loadLeadChats = async () => {
-  await chatsStore.fetchChats( leadId.value ); // Pass the leadId to fetch chats related to the lead
+  await chatsStore.fetchChats(leadId.value); // Pass the leadId to fetch chats related to the lead
 };
 // Data updating method
 const updateLead = async () => {
-  // await leadsStore.updateLead(leadId.value, leadsStore.lead);
-  // Navigate back to the leads list or show a success message
-  //await router.push('/leads');
-  Notify.create({
-    message: t('message.leadSaved'),
-    color: 'positive',
-    position: 'top',
-  });
+  await leadsStore.updateLead(leadId.value, leadsStore.lead);
+  // Navigate back to the leads list or do any other required action
 };
 
 onMounted(() => {
@@ -214,7 +211,7 @@ onMounted(() => {
                   <div>
                     <div class="row q-col-gutter-md q-mt-md">
                       <div class="col-12">
-                        <FileComponent :external-uuid="leadId.toString()" />
+                        <FileComponent :external-uuid="leadId.toString()"/>
                       </div>
                     </div>
                   </div>
@@ -347,8 +344,13 @@ onMounted(() => {
                       />
                     </div>
                     <div class="col-md-6 col-12">
+<!--                      <CountrySelector
+                        v-model="leadsStore.lead.users.user_settings.country"
+                      />-->
                       <CountrySelector
                         v-model="leadsStore.lead.users.user_settings.country"
+                        :error="countryError"
+                        :error-message="countryErrorMessage"
                       />
                     </div>
                   </div>

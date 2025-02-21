@@ -5,6 +5,8 @@ export default {
   messages: {
     failed: 'Aktion fehlgeschlagen',
     success: 'Aktion wurde erfolgreich durchgeführt',
+    leadSaved: 'Der Interessent wurde erfolgreich gespeichert',
+    errorUpdatingLead: 'Beim Speichern des Interessenten ist ein Fehler aufgetreten',
   },
   nav: {
     dashboard: 'Dashboard',
@@ -56,7 +58,6 @@ export default {
   share: 'Anteil gesamt',
   market: 'Typ',
   shop: 'Shop',
-  selectCountry: 'Markt wählen',
   commissionOverview: 'Provisionsübersicht',
   overallClicks: 'Clicks gesamt',
   searchTable: 'Tabelle durchsuchen...',
@@ -269,5 +270,6 @@ export default {
   fileUploadHint: 'Dateien hierher ziehen oder klicken, um auszuwählen',
   fileUploadHintDropActive: 'Los lassen um Datei hochzuladen',
   noAttachments: 'Keine Dateien vorhanden',
+  selectCountry: 'Wähle ein Land aus',
 
 };

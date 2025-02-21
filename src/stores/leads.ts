@@ -1,8 +1,8 @@
-import { defineStore } from 'pinia';
+import {defineStore} from 'pinia';
 import axios from 'axios';
-import { useAuthStore } from 'stores/auth';
-import { LocalStorage, Dark } from 'quasar';
-import { Composer, useI18n } from 'vue-i18n';
+import {useAuthStore} from 'stores/auth';
+import {LocalStorage, Dark, Notify} from 'quasar';
+import {Composer, useI18n} from 'vue-i18n';
 
 export interface RequestProps {
   pagination: {
@@ -268,6 +268,51 @@ export const useLeadsStore = defineStore({
         this.loading = false;
       } catch (e) {
         console.error(`Error fetching lead details for ID ${id}:`, e);
+        this.loading = false;
+      }
+    },
+    async updateLead(id: string, leadData: any) {
+      this.loading = true;
+      try {
+        const authStore = useAuthStore();
+        const updateEndpoint = `/api/v1/leads/${id}`;
+
+        // Prepare the data payload, including users and user_settings
+        const payload = {
+          ...leadData,
+          users: {
+            ...leadData.users,
+            user_settings: {
+              ...leadData.users.user_settings
+            }
+          }
+        };
+
+        const response = await axios.put(
+          process.env.APP_API_BASE_URL + updateEndpoint,
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${authStore.accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        this.lead = response.data.data; // Update local state with new data
+        Notify.create({
+          message: this.i18n.t('messages.leadSaved'),
+          color: 'positive',
+          position: 'top',
+        });
+      } catch (e) {
+        console.error(`Error updating lead for ID ${id}:`, e);
+        Notify.create({
+          message: this.i18n.t('messages.errorUpdatingLead'),
+          color: 'negative',
+          position: 'top',
+        });
+      } finally {
         this.loading = false;
       }
     },

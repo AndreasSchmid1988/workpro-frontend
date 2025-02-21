@@ -1,7 +1,6 @@
 <template>
   <q-select
     dense
-    class=""
     popup-content-style="height: 150px;"
     use-input
     input-debounce="300"
@@ -9,7 +8,7 @@
     option-value="alpha2Code"
     option-label="name"
     :label="$t('country')"
-    v-model="selectedCountry"
+    v-model="selectedCountryAlphaCode"
     :options="filteredCountries"
     :error="!!countryError"
     :error-message="countryErrorMessage"
@@ -24,6 +23,10 @@
         style="width: 30px; height: auto"
         alt="icon"
       />
+    </template>
+
+    <template v-slot:selected-item>
+      {{ selectedCountry?.name || '' }}
     </template>
 
     <template v-slot:option="scope">
@@ -57,67 +60,74 @@ interface Country {
 }
 
 const props = defineProps<{
-  modelValue: Country | null;
+  modelValue: string | null; // Expecting alpha2Code
   error: boolean;
   errorMessage: string;
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: Country | null): void;
+  (e: 'update:modelValue', value: string | null): void;
 }>();
 
-const reportingStore = useReportingStore();
-onMounted(() => {
-  reportingStore.getCountries(); // Ensure countries are loaded
-});
-
 const { t } = useI18n();
-
+const reportingStore = useReportingStore();
 const countryUserInput = ref<string>('');
-const selectedCountry = ref<Country | null>(props.modelValue);
-
-const countryFilterFn = (val: string, update: (fn: () => void) => void) => {
-  update(() => {
-    countryUserInput.value = val;
-  });
-};
-
-const commonCountries = [
-  'DE', 'AT', 'CH', 'US', 'CA', 'GB', 'FR', 'IT', 'ES', 'AU', 'BR', 'JP', 'IN',
-];
-
-const filteredCountries = computed<Country[]>(() => {
-  const needle = countryUserInput.value.toLowerCase();
-
-  let commonContries = reportingStore.countryList.filter((country: Country) =>
-    commonCountries.includes(country.alpha2Code)
-  );
-
-  commonContries.sort((a: Country, b: Country) =>
-    commonCountries.indexOf(a.alpha2Code) - commonCountries.indexOf(b.alpha2Code)
-  );
-
-  const allCountries = [...commonContries, ...reportingStore.countryList.filter((country: Country) =>
-    !commonCountries.includes(country.alpha2Code)
-  )];
-
-  if (needle.length > 0) {
-    return allCountries.filter((country: Country) =>
-      country.name.toLowerCase().includes(needle)
-    );
-  }
-  return allCountries;
-});
-
-const handleModelUpdate = (val: Country | null) => {
-  selectedCountry.value = val;
-  emit('update:modelValue', val);
-};
-
-watch(() => props.modelValue, (newVal) => {
-  selectedCountry.value = newVal;
-});
+const selectedCountryAlphaCode = ref<string | null>(props.modelValue);
 
 const countryError = computed(() => props.error);
 const countryErrorMessage = computed(() => props.errorMessage);
+
+const countryFilterFn = (val: string, update: (fn: () => void) => void) => {
+  update(() => {
+    countryUserInput.value = val.toLowerCase();
+  });
+};
+
+onMounted(() => {
+  reportingStore.getCountries();
+});
+
+const commonCountries = ['DE', 'AT', 'CH', 'US', 'CA', 'GB', 'FR', 'IT', 'ES', 'AU', 'BR', 'JP', 'IN'];
+
+const filteredCountries = computed<Country[]>(() => {
+  const needle = countryUserInput.value;
+  const commonCountriesList = reportingStore.countryList.filter((country: Country) =>
+    commonCountries.includes(country.alpha2Code)
+  );
+
+  commonCountriesList.sort((a: Country, b: Country) =>
+    commonCountries.indexOf(a.alpha2Code) - commonCountries.indexOf(b.alpha2Code)
+  );
+
+  const allCountries = [
+    ...commonCountriesList,
+    ...reportingStore.countryList.filter((country: Country) =>
+      !commonCountries.includes(country.alpha2Code)
+    )
+  ];
+
+  if (needle) {
+    return allCountries.filter(country =>
+      country.name.toLowerCase().includes(needle)
+    );
+  }
+
+  return allCountries;
+});
+
+watch(() => props.modelValue, newVal => {
+  console.log('watching model value', newVal);
+  selectedCountryAlphaCode.value = newVal;
+});
+
+const selectedCountry = computed(() => {
+  return reportingStore.countryList.find(
+    country => country.alpha2Code === selectedCountryAlphaCode.value
+  ) || null;
+});
+
+const handleModelUpdate = (country: Country | null) => {
+  selectedCountryAlphaCode.value = country?.alpha2Code || null;
+  emit('update:modelValue', country?.alpha2Code || null);
+};
 </script>
