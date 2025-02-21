@@ -9,6 +9,7 @@ import {useChatsStore} from 'stores/chats';
 import {useAuthStore} from 'stores/auth';
 import moment from 'moment';
 import CountrySelector from 'components/CountrySelector.vue';
+import FileComponent from 'components/FileComponent.vue';
 
 const {t} = useI18n();
 
@@ -19,17 +20,6 @@ const leadId = ref(route.params.id);
 const leadsStore = useLeadsStore();
 const chatsStore = useChatsStore(); // Initialize the chats store
 const authStore = useAuthStore(); // Initialize the auth store
-
-const attachments = ref([]);
-
-function fetchAttachments() {
-  // Simulating an API call for demonstration
-  attachments.value = [
-    { name: 'File 1', url: '/path/to/file1' },
-    { name: 'File 2', url: '/path/to/file2' },
-    { name: 'File 3', url: '/path/to/file3' }
-  ];
-}
 
 const formatTimestamp = (timestamp) => {
   return moment(timestamp).format('DD.MM.YYYY HH:mm');
@@ -107,7 +97,6 @@ const updateLead = async () => {
 };
 
 onMounted(() => {
-  fetchAttachments();
   loadLeadData();
   loadLeadChats();
 });
@@ -223,24 +212,9 @@ onMounted(() => {
                   </div>
 
                   <div>
-                    <div class="text-subtitle1 q-mt-lg">
-                      {{ $t('leadAttachments') }}
-                    </div>
                     <div class="row q-col-gutter-md q-mt-md">
                       <div class="col-12">
-                        <q-list bordered class="attachment-list">
-                          <q-item v-for="(attachment, index) in attachments" :key="index" clickable>
-                            <q-item-section avatar>
-                              <q-icon name="insert_drive_file" />
-                            </q-item-section>
-                            <q-item-section>
-                              <q-item-label>{{ attachment.name }}</q-item-label>
-                            </q-item-section>
-                            <q-item-section side>
-                              <q-btn flat round dense icon="file_download" :href="attachment.url" target="_blank" />
-                            </q-item-section>
-                          </q-item>
-                        </q-list>
+                        <FileComponent :external-uuid="leadId.toString()" />
                       </div>
                     </div>
                   </div>

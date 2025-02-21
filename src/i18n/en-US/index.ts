@@ -256,4 +256,10 @@ export default {
   leadsNumber: 'ID',
   subject: 'Subject',
   message: 'Message',
+  fileUpload: 'Upload file',
+  filesUpload: 'Upload files',
+  fileUploadHint: 'Drag and drop files here, or click to select',
+  fileUploadHintDropActive: 'Drop the file to upload',
+  noAttachments: 'No attachments',
+
 };

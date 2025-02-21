@@ -258,11 +258,16 @@ export default {
   enterYourMessage: 'Gib deine Nachricht ein',
   revenuePotential: 'Umsatzpotenzial',
   leadMessage: 'Interessenten Nachricht',
-  leadAttachments: 'Anhänge',
+  attachments: 'Anhänge',
   postalcode: 'Postleitzahl',
   leadCount: 'Interessenten Nummer',
   leadsNumber: 'ID',
   subject: 'Betreff',
   message: 'Nachricht',
+  fileUpload: 'Datei hochladen',
+  filesUpload: 'Dateien hochladen',
+  fileUploadHint: 'Dateien hierher ziehen oder klicken, um auszuwählen',
+  fileUploadHintDropActive: 'Los lassen um Datei hochzuladen',
+  noAttachments: 'Keine Dateien vorhanden',
 
 };
