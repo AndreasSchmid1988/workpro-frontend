@@ -3,13 +3,11 @@ import {computed, onMounted, ref} from 'vue';
 import {useLeadsStore} from 'stores/leads';
 import {useRoute} from 'vue-router';
 import {useI18n} from 'vue-i18n';
-import {Notify} from 'quasar';
 import SaveCreate from 'components/SaveCreateComponent.vue';
-import {useChatsStore} from 'stores/chats';
-import {useAuthStore} from 'stores/auth';
 import moment from 'moment';
 import CountrySelector from 'components/CountrySelector.vue';
 import FileComponent from 'components/FileComponent.vue';
+import ChatComponent from 'components/ChatComponent.vue';
 
 const {t} = useI18n();
 
@@ -18,35 +16,10 @@ const route = useRoute();
 const leadId = ref(route.params.id);
 
 const leadsStore = useLeadsStore();
-const chatsStore = useChatsStore(); // Initialize the chats store
-const authStore = useAuthStore(); // Initialize the auth store
 
 const countryError = ref(false); // or a computed property based on specific logic
 const countryErrorMessage = ref(''); // or a computed property returning the actual error message
 
-const formatTimestamp = (timestamp) => {
-  return moment(timestamp).format('DD.MM.YYYY HH:mm');
-};
-
-const chatMessage = ref('');
-
-const sendMessage = async () => {
-  if (chatMessage.value.trim()) {
-    try {
-      // Use the createChat action to send a chat message
-      await chatsStore.createChat({
-        subject_uuid: leadId.value, // Subject ID corresponds to leadId in this context
-        users_id: authStore.user.id, // You may need to replace 'currentUser' with the actual user ID
-        message: chatMessage.value
-      });
-
-      console.log('Message sent:', chatMessage.value);
-      chatMessage.value = ''; // Clear the input after sending
-    } catch (error) {
-      console.error('Could not send message:', error);
-    }
-  }
-};
 
 // Dropdown Options
 const leadTypeOptions = computed(() => [
@@ -83,10 +56,6 @@ const loadLeadData = async () => {
   await leadsStore.fetchLeadDetails(leadId.value);
 };
 
-// Also load chats for the lead
-const loadLeadChats = async () => {
-  await chatsStore.fetchChats(leadId.value); // Pass the leadId to fetch chats related to the lead
-};
 // Data updating method
 const updateLead = async () => {
   await leadsStore.updateLead(leadId.value, leadsStore.lead);
@@ -95,7 +64,6 @@ const updateLead = async () => {
 
 onMounted(() => {
   loadLeadData();
-  loadLeadChats();
 });
 </script>
 
@@ -344,9 +312,9 @@ onMounted(() => {
                       />
                     </div>
                     <div class="col-md-6 col-12">
-<!--                      <CountrySelector
-                        v-model="leadsStore.lead.users.user_settings.country"
-                      />-->
+                      <!--                      <CountrySelector
+                                              v-model="leadsStore.lead.users.user_settings.country"
+                                            />-->
                       <CountrySelector
                         v-model="leadsStore.lead.users.user_settings.country"
                         :error="countryError"
@@ -370,55 +338,56 @@ onMounted(() => {
           <!-- Lead Chat -->
           <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
             <div class="q-gutter-md q-mt-md">
-              <q-card flat class="shadow-1">
-                <q-card-section>
-                  <div class="text-h6">
-                    {{ $t('leadChat') }}
-                  </div>
-                  <!-- Display chat messages -->
-                  <div class="row q-col-gutter-md q-mt-md">
-                    <q-scroll-area class="col-12" style="height: 200px;">
-                      <q-chat-message
-                        v-for="chat in chatsStore.chats"
-                        :key="chat.id"
-                        :name="chat.users.user_settings.firstname + ' ' + chat.users.user_settings.lastname"
-                        :avatar="chat.users.profile_photo_path"
-                        :stamp="formatTimestamp(chat.created_at)"
-                        text-color="white"
-                        bg-color="primary"
-                      >
-                        <div>{{ chat.message }}</div>
-                      </q-chat-message>
-                    </q-scroll-area>
-                  </div>
-                </q-card-section>
-                <q-card-section>
-                  <div class="row q-col-gutter-md q-mt-md">
-                    <div class="col-12">
-                      <q-input
-                        v-model="chatMessage"
-                        :placeholder="$t('enterYourMessage')"
-                        outlined
-                        dense
-                        @keyup.enter="sendMessage"
-                        :disable="chatsStore.loading"
-                      >
-                        <template v-slot:append>
-                          <q-btn
-                            :disable="!chatMessage"
-                            color="primary"
-                            @click="sendMessage"
-                            icon="send"
-                            flat
-                            rounded
-                            :loading="chatsStore.loading"
-                          />
-                        </template>
-                      </q-input>
-                    </div>
-                  </div>
-                </q-card-section>
-              </q-card>
+              <ChatComponent :header-text="$t('leadChat')" :subject-id="leadId.toString()"/>
+              <!--              <q-card flat class="shadow-1">
+                              <q-card-section>
+                                <div class="text-h6">
+                                  {{ $t('leadChat') }}
+                                </div>
+                                &lt;!&ndash; Display chat messages &ndash;&gt;
+                                <div class="row q-col-gutter-md q-mt-md">
+                                  <q-scroll-area class="col-12" style="height: 200px;">
+                                    <q-chat-message
+                                      v-for="chat in chatsStore.chats"
+                                      :key="chat.id"
+                                      :name="chat.users.user_settings.firstname + ' ' + chat.users.user_settings.lastname"
+                                      :avatar="chat.users.profile_photo_path"
+                                      :stamp="formatTimestamp(chat.created_at)"
+                                      text-color="white"
+                                      bg-color="primary"
+                                    >
+                                      <div>{{ chat.message }}</div>
+                                    </q-chat-message>
+                                  </q-scroll-area>
+                                </div>
+                              </q-card-section>
+                              <q-card-section>
+                                <div class="row q-col-gutter-md q-mt-md">
+                                  <div class="col-12">
+                                    <q-input
+                                      v-model="chatMessage"
+                                      :placeholder="$t('enterYourMessage')"
+                                      outlined
+                                      dense
+                                      @keyup.enter="sendMessage"
+                                      :disable="chatsStore.loading"
+                                    >
+                                      <template v-slot:append>
+                                        <q-btn
+                                          :disable="!chatMessage"
+                                          color="primary"
+                                          @click="sendMessage"
+                                          icon="send"
+                                          flat
+                                          rounded
+                                          :loading="chatsStore.loading"
+                                        />
+                                      </template>
+                                    </q-input>
+                                  </div>
+                                </div>
+                              </q-card-section>
+                            </q-card>-->
             </div>
           </div>
         </div>
