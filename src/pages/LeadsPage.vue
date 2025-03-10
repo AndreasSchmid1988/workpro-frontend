@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch, onBeforeMount } from 'vue';
 import { RequestProps, useLeadsStore } from 'stores/leads';
 import { useI18n } from 'vue-i18n';
+import { QChip } from 'quasar';
 
 const leadsStore = useLeadsStore();
 const { t } = useI18n();
@@ -77,6 +78,24 @@ function formatDateTimeIntl(date: string) {
     timeStyle: 'medium',
   }).format(new Date(date));
 }
+
+function getStatusChipColor(status: string) {
+  switch (status) {
+    case 'new':
+      return 'blue'; // blue
+    case 'contacted':
+      return 'orange'; // grey
+    case 'qualified':
+      return 'light-green'; // green
+    case 'converted':
+      return 'positive'; // dark
+    case 'lost':
+      return 'negative'; // red
+    default:
+      return 'grey';
+  }
+}
+
 </script>
 
 <template>
@@ -203,6 +222,14 @@ function formatDateTimeIntl(date: string) {
                             }}
                           </q-tooltip>
                         </span>
+                      </template>
+                      <!-- Standardanzeige für LeadStatus -->
+                      <template v-else-if="col.name === 'lead_status'">
+                        <q-chip ripple :dark="false" text-color="white" :color="getStatusChipColor(props.row[col.field])" >
+                          {{
+                            t(`leadStatuses.${props.row[col.field]}`) || props.row[col.field]
+                          }}
+                        </q-chip>
                       </template>
                       <!-- Standardanzeige -->
                       <template v-else>
