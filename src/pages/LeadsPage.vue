@@ -82,22 +82,25 @@ function formatDateTimeIntl(date: string) {
 <template>
   <q-page>
     <div class="q-ma-lg q-pt-md">
-      <!-- Tabs: Jeder Tab zeigt den Statusnamen und die Anzahl der Leads -->
-      <q-tabs
-        v-model="selectedStatus"
-        dense
-        class="q-mb-md"
-        align="justify"
-      >
-        <q-tab
-          v-for="option in leadStatusOptions"
-          :key="option.value"
-          :name="option.value"
-          :label="option.value === 'all'
+      <q-card flat class="shadow-1">
+        <!-- Tabs: Jeder Tab zeigt den Statusnamen und die Anzahl der Leads -->
+        <q-tabs
+          v-model="selectedStatus"
+          dense
+          class="q-mb-md"
+          align="justify"
+        >
+          <q-tab
+            v-for="option in leadStatusOptions"
+            :key="option.value"
+            :name="option.value"
+            :label="option.value === 'all'
             ? `${option.label} (${allCount})`
             : `${option.label} (${statusCountsSafe[option.value]})`"
-        />
-      </q-tabs>
+          />
+        </q-tabs>
+      </q-card>
+
       <div class="row q-col-gutter-md">
         <div class="col-xs-12">
           <q-table
