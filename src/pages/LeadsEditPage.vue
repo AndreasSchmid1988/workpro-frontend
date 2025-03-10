@@ -41,8 +41,8 @@ const leadStatusOptions = [
   {label: t('leadStatuses.new'), value: 'new'},
   {label: t('leadStatuses.contacted'), value: 'contacted'},
   {label: t('leadStatuses.qualified'), value: 'qualified'},
-  {label: t('leadStatuses.lost'), value: 'lost'},
   {label: t('leadStatuses.converted'), value: 'converted'},
+  {label: t('leadStatuses.lost'), value: 'lost'},
 ];
 
 const leadSalutationOptions = [

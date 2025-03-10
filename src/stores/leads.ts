@@ -29,6 +29,8 @@ interface TableColumn<T = unknown> {
   headerClasses?: string;
 }
 
+type StatusCountsMap = Record<string, number>;
+
 export const useLeadsStore = defineStore({
   id: 'leads',
   state: () => ({
@@ -105,7 +107,7 @@ export const useLeadsStore = defineStore({
         required: true,
         label: useI18n().t('city'),
         align: 'left',
-        field: (row: any) => row.users.user_settings?.city || '',
+        field: (row: any) => row.users?.user_settings?.city || '',
         sortable: true,
       },
       {
@@ -184,7 +186,6 @@ export const useLeadsStore = defineStore({
         name: '',
         email: '',
         email_verified_at: '',
-        // ... (other user properties)
         user_settings: {
           id: '',
           users_id: '',
@@ -200,10 +201,10 @@ export const useLeadsStore = defineStore({
           city: '',
           country: '',
           profile_photo_path: '',
-          // ... (other settings)
         },
       },
     },
+    statusCounts: {new: 0, contacted: 0, qualified: 0, lost: 0, converted: 0} as StatusCountsMap,
     searchTerm: '',
     pagination: {
       page: 1,
@@ -214,38 +215,43 @@ export const useLeadsStore = defineStore({
     },
   }),
   actions: {
-    async fetchLeads() {
+    async fetchLeads(selectedStatus?: string) {
       this.loading = true;
       try {
         const authStore = useAuthStore();
         const leadEndpoint = '/api/v1/leads';
+        // Erstelle die Parameter, ohne den Status-Filter, falls "all" gewählt ist
+        const params: any = {
+          search: this.searchTerm,
+          page: this.pagination.page,
+          itemsPerPage: this.pagination.rowsPerPage,
+          sortBy: [
+            {
+              key: this.pagination.sortBy ?? 'id',
+              order: this.pagination.descending ? 'desc' : 'asc',
+            },
+          ],
+        };
+        if (selectedStatus && selectedStatus !== 'all') {
+          params.status = selectedStatus;
+        }
         const response = await axios.get(
           process.env.APP_API_BASE_URL + leadEndpoint,
           {
             headers: {
               Authorization: `Bearer ${authStore.accessToken}`,
             },
-            params: {
-              search: this.searchTerm,
-              page: this.pagination.page,
-              itemsPerPage: this.pagination.rowsPerPage,
-              sortBy: [
-                {
-                  key: this.pagination.sortBy ?? 'id',
-                  order: this.pagination.descending ? 'desc' : 'asc',
-                },
-              ],
-            },
+            params,
           }
         );
-
-        this.leads = response.data.data;
-        this.pagination.rowsNumber = response.data.total;
-        this.pagination.rowsPerPage = response.data.per_page;
-
-        this.loading = false;
+        if (response.data && response.data.data !== undefined) {
+          this.leads = response.data.data;
+          this.pagination.rowsNumber = response.data.total;
+          this.pagination.rowsPerPage = response.data.per_page;
+        }
       } catch (e) {
         console.log(e);
+      } finally {
         this.loading = false;
       }
     },
@@ -262,12 +268,10 @@ export const useLeadsStore = defineStore({
             },
           }
         );
-
-        this.lead = response.data.data; // Assuming the response structure contains lead details directly
-
-        this.loading = false;
+        this.lead = response.data.data;
       } catch (e) {
         console.error(`Error fetching lead details for ID ${id}:`, e);
+      } finally {
         this.loading = false;
       }
     },
@@ -276,8 +280,6 @@ export const useLeadsStore = defineStore({
       try {
         const authStore = useAuthStore();
         const updateEndpoint = `/api/v1/leads/${id}`;
-
-        // Prepare the data payload, including users and user_settings
         const payload = {
           ...leadData,
           users: {
@@ -287,7 +289,6 @@ export const useLeadsStore = defineStore({
             }
           }
         };
-
         const response = await axios.put(
           process.env.APP_API_BASE_URL + updateEndpoint,
           payload,
@@ -298,8 +299,7 @@ export const useLeadsStore = defineStore({
             },
           }
         );
-
-        this.lead = response.data.data; // Update local state with new data
+        this.lead = response.data.data;
         Notify.create({
           message: this.i18n.t('messages.leadSaved'),
           color: 'positive',
@@ -316,6 +316,36 @@ export const useLeadsStore = defineStore({
         this.loading = false;
       }
     },
+    async fetchStatusCounts() {
+      this.loading = true;
+      try {
+        const authStore = useAuthStore();
+        const statusCountsEndpoint = '/api/v1/leads/statuses';
+        const response = await axios.get(
+          `${process.env.APP_API_BASE_URL}${statusCountsEndpoint}`,
+          {
+            headers: {
+              Authorization: `Bearer ${authStore.accessToken}`,
+            },
+          }
+        );
+        let countsData: Array<{ status: string; count: number }> = [];
+        if (Array.isArray(response.data)) {
+          countsData = response.data;
+        } else if (response.data && Array.isArray(response.data.data)) {
+          countsData = response.data.data;
+        }
+        // Reduziere auf ein Objekt – initialisiere mit den Standardwerten
+        this.statusCounts = countsData.reduce((acc, item) => {
+          acc[item.status] = item.count;
+          return acc;
+        }, {new: 0, contacted: 0, qualified: 0, lost: 0, converted: 0} as StatusCountsMap);
+      } catch (e) {
+        console.error('Error fetching lead status counts:', e);
+      } finally {
+        this.loading = false;
+      }
+    },
     edit: async function (id: string) {
       this.router.push('leads/' + id);
     },
@@ -327,6 +357,5 @@ export const useLeadsStore = defineStore({
       this.darkMode = darkMode;
       LocalStorage.set('darkMode', darkMode);
     },
-    // Add more lead-specific actions if needed
   },
 });

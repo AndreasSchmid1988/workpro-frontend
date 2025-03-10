@@ -1,10 +1,54 @@
 <script lang="ts" setup>
-import {onMounted} from 'vue';
-import {RequestProps, useLeadsStore} from 'stores/leads';
+import { ref, computed, onMounted, watch, onBeforeMount } from 'vue';
+import { RequestProps, useLeadsStore } from 'stores/leads';
+import { useI18n } from 'vue-i18n';
 
 const leadsStore = useLeadsStore();
+const { t } = useI18n();
+
+// Status-Optionen für die Tabs:
+const leadStatusOptions = [
+  { label: t('all') || 'Alle', value: 'all' },
+  { label: t('leadStatuses.new') || 'Neu', value: 'new' },
+  { label: t('leadStatuses.contacted') || 'Kontaktiert', value: 'contacted' },
+  { label: t('leadStatuses.qualified') || 'Qualifiziert', value: 'qualified' },
+  { label: t('leadStatuses.converted') || 'Konvertiert', value: 'converted' },
+  { label: t('leadStatuses.lost') || 'Verloren', value: 'lost' },
+];
+
+const selectedStatus = ref('all');
+
+// Sicherer Zugriff auf StatusCounts mit Standardwerten:
+const statusCountsSafe = computed(() => ({
+  new: leadsStore.statusCounts.new ?? 0,
+  contacted: leadsStore.statusCounts.contacted ?? 0,
+  qualified: leadsStore.statusCounts.qualified ?? 0,
+  lost: leadsStore.statusCounts.lost ?? 0,
+  converted: leadsStore.statusCounts.converted ?? 0,
+}));
+
+const allCount = computed(() =>
+  statusCountsSafe.value.new +
+  statusCountsSafe.value.contacted +
+  statusCountsSafe.value.qualified +
+  statusCountsSafe.value.lost +
+  statusCountsSafe.value.converted
+);
+
+// Vor dem Mounten zuerst die Status Counts abrufen:
+onBeforeMount(() => {
+  leadsStore.fetchStatusCounts();
+});
+
+// Beim Mounten werden die Leads basierend auf dem aktuellen Status geladen:
 onMounted(() => {
-  leadsStore.fetchLeads();
+  leadsStore.fetchLeads(selectedStatus.value);
+});
+
+// Beim Wechsel des Tabs:
+watch(selectedStatus, (newStatus) => {
+  leadsStore.pagination.page = 1;
+  leadsStore.fetchLeads(newStatus);
 });
 
 const handleRequest = async (props: RequestProps) => {
@@ -12,12 +56,11 @@ const handleRequest = async (props: RequestProps) => {
   leadsStore.pagination.rowsPerPage = props.pagination.rowsPerPage;
   leadsStore.pagination.sortBy = props.pagination.sortBy;
   leadsStore.pagination.descending = props.pagination.descending;
-  await leadsStore.fetchLeads();
+  await leadsStore.fetchLeads(selectedStatus.value);
 };
 
 function formatDateIntl(date: string) {
   if (!date || date === '') return '';
-
   return Intl.DateTimeFormat(navigator.language, {
     timeZone: 'Europe/Berlin',
     year: 'numeric',
@@ -28,7 +71,6 @@ function formatDateIntl(date: string) {
 
 function formatDateTimeIntl(date: string) {
   if (!date || date === '') return '';
-
   return Intl.DateTimeFormat(navigator.language, {
     timeZone: 'Europe/Berlin',
     dateStyle: 'medium',
@@ -40,6 +82,22 @@ function formatDateTimeIntl(date: string) {
 <template>
   <q-page>
     <div class="q-ma-lg q-pt-md">
+      <!-- Tabs: Jeder Tab zeigt den Statusnamen und die Anzahl der Leads -->
+      <q-tabs
+        v-model="selectedStatus"
+        dense
+        class="q-mb-md"
+        align="justify"
+      >
+        <q-tab
+          v-for="option in leadStatusOptions"
+          :key="option.value"
+          :name="option.value"
+          :label="option.value === 'all'
+            ? `${option.label} (${allCount})`
+            : `${option.label} (${statusCountsSafe[option.value]})`"
+        />
+      </q-tabs>
       <div class="row q-col-gutter-md">
         <div class="col-xs-12">
           <q-table
@@ -113,86 +171,67 @@ function formatDateTimeIntl(date: string) {
             </template>
             <template v-slot:body="props">
               <q-tr :props="props">
-                <template v-for="col in props.cols">
-                  <q-td
-                    v-if="col.name !== 'actions'"
-                    :key="col.name"
-                    :props="props"
-                  >
-                    <template
-                      v-if="col.type === 'date' || col.name === 'created_at' || col.name === 'updated_at'">
-                      <span>
-                        {{ formatDateIntl(col.value) }}
-                        <q-tooltip
-                          v-if="col.value"
-                          anchor="top middle"
-                          self="bottom middle"
-                          :offset="[0, 5]"
-                        >
-                          {{ formatDateTimeIntl(col.value) }}
-                        </q-tooltip>
-                      </span>
-                    </template>
-                    <template v-else>
-                      {{ col.value }}
-                    </template>
-                  </q-td>
-                  <q-td v-else :key="col.name" auto-width>
-                    <div class="col-4">
-                      <q-btn
-                        flat
-                        round
-                        @click="leadsStore.edit(props.row.id)"
-                        style="font-size: 0.7rem"
-                      >
-                        <q-icon>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
+                <template v-for="col in props.cols" :key="col.name">
+                  <q-td :props="props">
+                    <!-- Für alle Spalten außer "actions" -->
+                    <template v-if="col.name !== 'actions'">
+                      <!-- Wenn es sich um ein Datum handelt -->
+                      <template v-if="col.type === 'date' || col.name === 'created_at' || col.name === 'updated_at'">
+                        <span>
+                          {{
+                            formatDateIntl(
+                              typeof col.field === 'function'
+                                ? col.field(props.row)
+                                : props.row[col.field]
+                            )
+                          }}
+                          <q-tooltip
+                            v-if="props.row[col.field]"
+                            anchor="top middle"
+                            self="bottom middle"
+                            :offset="[0, 5]"
                           >
-                            <g
-                              id="Interface-Essential_Edit_pencil-circle"
-                              data-name="Interface-Essential / Edit / pencil-circle"
-                              transform="translate(-399.005 -3091)"
-                            >
-                              <g id="Group_308" data-name="Group 308">
-                                <g id="pencil-circle">
-                                  <path
-                                    id="Shape_1444"
-                                    data-name="Shape 1444"
-                                    d="M408.751,3108.432l-3.712.531.53-3.713,7.561-7.561a2.25,2.25,0,0,1,3.182,3.182Z"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="1.5"
-                                  />
-                                  <path
-                                    id="Oval_184"
-                                    data-name="Oval 184"
-                                    d="M411.005,3114.25a11.25,11.25,0,1,0-11.25-11.25A11.25,11.25,0,0,0,411.005,3114.25Z"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="1.5"
-                                  />
+                            {{
+                              formatDateTimeIntl(
+                                typeof col.field === 'function'
+                                  ? col.field(props.row)
+                                  : props.row[col.field]
+                              )
+                            }}
+                          </q-tooltip>
+                        </span>
+                      </template>
+                      <!-- Standardanzeige -->
+                      <template v-else>
+                        {{
+                          typeof col.field === 'function'
+                            ? col.field(props.row)
+                            : props.row[col.field]
+                        }}
+                      </template>
+                    </template>
+                    <!-- Aktionen-Spalte -->
+                    <template v-else>
+                      <div class="col-4">
+                        <q-btn flat round @click="leadsStore.edit(props.row.id)" style="font-size: 0.7rem">
+                          <q-icon>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                              <g id="Interface-Essential_Edit_pencil-circle" data-name="Interface-Essential / Edit / pencil-circle" transform="translate(-399.005 -3091)">
+                                <g id="Group_308" data-name="Group 308">
+                                  <g id="pencil-circle">
+                                    <path id="Shape_1444" data-name="Shape 1444" d="M408.751,3108.432l-3.712.531.53-3.713,7.561-7.561a2.25,2.25,0,0,1,3.182,3.182Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+                                    <path id="Oval_184" data-name="Oval 184" d="M411.005,3114.25a11.25,11.25,0,1,0-11.25-11.25A11.25,11.25,0,0,0,411.005,3114.25Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+                                  </g>
                                 </g>
                               </g>
-                            </g>
-                          </svg>
-                        </q-icon>
-                        <q-tooltip
-                          anchor="top middle"
-                          self="bottom middle"
-                          :offset="[0, 5]"
-                        >
-                          {{ $t('editUser') }}
-                        </q-tooltip>
-                      </q-btn>
-                    </div>
+                            </svg>
+                          </q-icon>
+                          <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 5]">
+                            {{ $t('editUser') }}
+                          </q-tooltip>
+                        </q-btn>
+                      </div>
+                    </template>
                   </q-td>
                 </template>
               </q-tr>

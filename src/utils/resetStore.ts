@@ -1,4 +1,4 @@
-import { Pinia, Store, getActivePinia } from 'pinia';
+import {Pinia, Store, getActivePinia} from 'pinia';
 
 interface ExtendedPinia extends Pinia {
   _s: Map<string, Store>;
@@ -19,7 +19,7 @@ export function useResetStore() {
 
   resetStore.all = () => {
     pinia._s.forEach((store) => {
-      if (store.$id !== 'auth' && store.$id !== 'users' && store.$id !== 'leads' ) {
+      if (store.$id !== 'auth' && store.$id !== 'users' && store.$id !== 'leads' && store.$id !== 'chats' && store.$id !== 'files') {
         store.$reset();
       }
     });
