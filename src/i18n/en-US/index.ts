@@ -223,6 +223,7 @@ export default {
   instagram: 'Instagram',
   twitter: 'Twitter',
   other: 'Other',
+  all: 'All',
   new: 'New',
   contacted: 'Contacted',
   qualified: 'Qualified',

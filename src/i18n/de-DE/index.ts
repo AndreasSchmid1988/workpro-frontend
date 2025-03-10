@@ -231,6 +231,7 @@ export default {
   instagram: 'Instagram',
   twitter: 'Twitter',
   other: 'Sonstiges',
+  all: 'Alle',
   new: 'Neu',
   contacted: 'Kontaktiert',
   qualified: 'Qualifiziert',
