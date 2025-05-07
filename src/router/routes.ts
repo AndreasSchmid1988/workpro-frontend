@@ -37,6 +37,34 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/LeadsEditPage.vue'),
       },
       {
+        path: '/offers',
+        component: () => import('pages/OffersPage.vue'),
+      },
+      {
+        path: '/offers/create',
+        component: () => import('pages/OffersEditPage.vue'),
+      },
+      {
+        path: '/offers/:id',
+        component: () => import('pages/OffersEditPage.vue'),
+      },
+      {
+        path: '/management/feature-groups',
+        component: () => import('pages/Management/FeatureGroupsPage.vue'),
+      },
+      {
+        path: '/management/products',
+        component: () => import('pages/Management/ProductsPage.vue'),
+      },
+      {
+        path: '/management/products/create',
+        component: () => import('pages/Management/ProductsEditPage.vue'),
+      },
+      {
+        path: '/management/products/:id',
+        component: () => import('pages/Management/ProductsEditPage.vue'),
+      },
+      {
         path: '/api',
         component: () => import('pages/APIPage.vue'),
       },

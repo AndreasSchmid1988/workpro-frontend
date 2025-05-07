@@ -105,6 +105,14 @@ watch(selectedStatus, () => {
   leadsStore.pagination.page = 1;
   leadsStore.fetchLeads(selectedStatus.value, dateRange.value);
 });
+// reload leads when search term changes
+watch(
+  () => leadsStore.searchTerm,
+  () => {
+    leadsStore.pagination.page = 1;
+    leadsStore.fetchLeads(selectedStatus.value, dateRange.value);
+  }
+);
 
 const handleRequest = async (props: RequestProps) => {
   leadsStore.pagination.page = props.pagination.page;
@@ -187,38 +195,6 @@ function getStatusChipColor(status: string) {
           <q-card flat class="shadow-1 q-pa-sm">
             <!-- Verwende items-center, um alle Elemente in der Zeile vertikal zu zentrieren -->
             <div class="row items-center q-gutter-md">
-              <!-- Suchleiste: nimmt den verfügbaren Platz ein -->
-              <div class="col">
-                <q-input
-                  outlined
-                  dense
-                  debounce="300"
-                  v-model="leadsStore.searchTerm"
-                  :placeholder="$t('searchTable')"
-                >
-                  <template v-slot:append>
-                    <q-icon class="cursor-pointer" @click="leadsStore.searchTerm = ''">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                           style="width: 15px; height: auto">
-                        <g id="Interface-Essential_Form-Validation_close"
-                           data-name="Interface-Essential / Form-Validation / close"
-                           transform="translate(-206.694 -4382.689)">
-                          <g id="Group_395" data-name="Group 395">
-                            <g id="close">
-                              <path id="Shape_1765" data-name="Shape 1765" d="M207.755,4406.25l22.5-22.5" fill="none"
-                                    stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                    stroke-width="1.5"/>
-                              <path id="Shape_1766" data-name="Shape 1766" d="M230.255,4406.25l-22.5-22.5" fill="none"
-                                    stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                    stroke-width="1.5"/>
-                            </g>
-                          </g>
-                        </g>
-                      </svg>
-                    </q-icon>
-                  </template>
-                </q-input>
-              </div>
 
               <!-- Datumsbereich und Reset-Button: rechts ausgerichtet -->
               <div class="col-auto">
@@ -579,7 +555,15 @@ function getStatusChipColor(status: string) {
             @request="handleRequest"
           >
             <template v-slot:top-right>
-              <!-- Zusätzliche Elemente können hier hinzugefügt werden -->
+              <q-input
+                outlined
+                dense
+                debounce="300"
+                v-model="leadsStore.searchTerm"
+                :placeholder="$t('searchTable')"
+                class="q-ml-sm"
+                style="max-width: 200px"
+              />
             </template>
             <template v-slot:body="props">
               <q-tr :props="props">

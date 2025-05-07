@@ -19,7 +19,7 @@ export function useResetStore() {
 
   resetStore.all = () => {
     pinia._s.forEach((store) => {
-      if (store.$id !== 'auth' && store.$id !== 'users' && store.$id !== 'leads' && store.$id !== 'chats' && store.$id !== 'files') {
+      if (store.$id !== 'auth' && store.$id !== 'users' && store.$id !== 'leads' && store.$id !== 'chats' && store.$id !== 'files' && store.$id !== 'offers') {
         store.$reset();
       }
     });

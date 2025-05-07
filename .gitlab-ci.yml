@@ -1,0 +1,138 @@
+variables:
+  TAG: "latest"
+
+stages:
+  - build_npm
+  - build_containers
+  - deploy_containers
+
+build_npm_dependencies:
+  only:
+    - master
+  tags:
+    - metavision
+  artifacts:
+    paths:
+      - dist
+    expire_in: 1 hour
+  stage: build_npm
+  image: node:18
+  script:
+    - npm install
+    - npm i -g @quasar/cli
+    - cp env.dev .env
+    - echo $CI_COMMIT_SHA > ./public/$CI_COMMIT_SHA.version
+    - quasar build -m pwa
+
+build_npm_dependencies_live:
+  tags:
+    - metavision
+  only:
+    - tags
+  artifacts:
+    paths:
+      - dist
+    expire_in: 1 hour
+  stage: build_npm
+  image: node:18
+  script:
+    - npm install
+    - npm i -g @quasar/cli
+    - cp env.live .env
+    - echo $CI_COMMIT_TAG > ./public/$CI_COMMIT_TAG.version
+    - echo $CI_COMMIT_TAG > ./public/version
+    - quasar build -m pwa
+
+
+build_dev:
+  stage: build_containers
+  only:
+    - master
+  extends: .build_containers
+  variables:
+    BUILD_TAG: $DOCKER_REGISTRY_HOSTNAME/metavision/workpro_frontend:$CI_COMMIT_SHA
+    BUILD_FILE: k8s/nginx/Dockerfile
+
+build_live:
+  stage: build_containers
+  only:
+    - tags
+  extends: .build_containers
+  variables:
+    BUILD_TAG: $DOCKER_REGISTRY_HOSTNAME/metavision/workpro_frontend:$CI_COMMIT_TAG
+    BUILD_FILE: k8s/nginx/Dockerfile
+
+.build_containers:
+  tags:
+    - metavision
+  artifacts:
+    paths:
+      - dist
+  before_script:
+    - mkdir /root/.docker
+    - echo $DOCKER_REGISTRY_AUTH | base64 -d > /root/.docker/config.json
+    - docker info
+  script:
+    - docker build --tag $BUILD_TAG --build-arg DEPLOY_KEY=$DEPLOY_KEY -f $BUILD_FILE .
+    - docker push $BUILD_TAG
+
+
+deploy_dev:
+  extends: .deploy_containers
+  #when: manual
+  only:
+    - master
+  except:
+    - tags
+  variables:
+    ARGO_REPO_PATH: https://gitlab.synatix.de/metavision/infrastructure/
+    ARGO_REPO_NAME: argocd-workpro-prod
+    ARGO_DIRECTORY: workpro-frontend-dev
+    TAG: $CI_COMMIT_SHA
+    SEARCH: $DOCKER_REGISTRY_HOSTNAME/metavision/workpro_frontend
+
+deploy_live:
+  extends: .deploy_containers
+  when: manual
+  only:
+    - tags
+  variables:
+    ARGO_REPO_PATH: https://gitlab.synatix.de/metavision/infrastructure/
+    ARGO_REPO_NAME: argocd-workpro-prod
+    ARGO_DIRECTORY: workpro-frontend-live
+    TAG: $CI_COMMIT_TAG
+    SEARCH: $DOCKER_REGISTRY_HOSTNAME/metavision/workpro_frontend
+
+.deploy_containers:
+  stage: deploy_containers
+  tags:
+    - metavision
+  before_script:
+    - export GITLAB_HOST=https://gitlab.synatix.de/
+    - export GITLAB_TOKEN=$ARGO_DEPLOY_TOKEN
+  script:
+    - |
+      apk update && apk add git bash grep glab
+      git config --global user.email "automation@metavision.io"
+      git config --global user.name "Automation"
+      touch /root/.netrc && \
+      echo ${DEPLOY_KEY} | tr ' ' '\n' | base64 -d  > /root/.netrc && \
+      chmod 600 /root/.netrc && \
+      git clone ${ARGO_REPO_PATH}${ARGO_REPO_NAME}.git
+      cd ${ARGO_REPO_NAME}
+      git checkout -b $CI_COMMIT_SHORT_SHA
+      git submodule update --init
+      for DIRECTORY in $ARGO_DIRECTORY
+        do
+          ./argocd-auto-deploy/run.sh ${ARGO_DIRECTORY} ${SEARCH} ${SEARCH}:${TAG}
+        done
+      git add .
+      git commit -m "updated image version tag"
+      git push -u origin $CI_COMMIT_SHORT_SHA
+      glab mr create -y --title ${ARGO_DIRECTORY}_${CI_COMMIT_SHORT_SHA} --description "automated merge request for ARGO CD deployment"
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        echo "AUTO CI is disabled for this tagged environments. Please accept the merge request manually!"
+      else
+        sleep 5
+        glab mr merge
+      fi

@@ -28,8 +28,18 @@ const getScrollHeight = () => {
 };
 
 const handleScroll = (event) => {
+  const scrollHeight = getScrollHeight();
+  if (!scrollHeight) {
+    atTheBottom.value = false;
+    return;
+  }
+  // If content shorter than viewport, never hide floating panel
+  if (scrollHeight <= $q.screen.height) {
+    atTheBottom.value = false;
+    return;
+  }
   const { position } = event;
-  atTheBottom.value = (getScrollHeight() - $q.screen.height - position.top) <= 0;
+  atTheBottom.value = (scrollHeight - $q.screen.height - position.top) <= 0;
 };
 
 const drawerClick = (e) => {
@@ -389,6 +399,19 @@ onMounted(() => {
               </q-item-section>
 
               <q-item-section>{{ $t('nav.offers') }}</q-item-section>
+            </q-item>
+            <!-- Products Management -->
+            <q-item
+              class="navigation-item q-mx-sm q-mt-xs"
+              active-class="tab-active"
+              to="/management/products"
+              clickable
+              v-ripple
+            >
+              <q-item-section avatar>
+                <q-icon name="inventory" />
+              </q-item-section>
+              <q-item-section>{{ $t('nav.products') }}</q-item-section>
             </q-item>
 
             <q-item

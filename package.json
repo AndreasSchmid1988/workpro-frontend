@@ -10,7 +10,8 @@
     "format": "prettier --write \"**/*.{js,ts,vue,scss,html,md,json}\" --ignore-path .gitignore",
     "test": "echo \"No test specified\" && exit 0",
     "dev": "quasar dev",
-    "build": "quasar build"
+    "build": "quasar build",
+    "shot": "node tools/screenshot.js"
   },
   "dependencies": {
     "@quasar/extras": "^1.16.4",
@@ -39,6 +40,7 @@
     "eslint-plugin-vue": "^9.0.0",
     "immutable": "^4.3.4",
     "prettier": "^2.5.1",
+    "puppeteer": "^24.8.1",
     "react": "^18.2.0",
     "redux": "^4.2.1",
     "redux-immutable": "^4.0.0",

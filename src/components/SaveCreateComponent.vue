@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import {defineProps} from 'vue';
 
-defineProps<{ id: string, loading: boolean, path: string }>();
+// id can be null when creating a new record
+defineProps<{ id: string | null, loading: boolean, path: string }>();
 
 const emit = defineEmits(['save-button-clicked', 'save-button-initiated-create']);
 

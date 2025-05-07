@@ -1,5 +1,8 @@
 // src/stores/auth.ts
 import { defineStore } from 'pinia';
+
+// Single global variable to ensure only one refresh request is active
+let refreshPromise: Promise<void> | null = null;
 import axios, { isAxiosError } from 'axios';
 import { LocalStorage, QVueGlobals, useQuasar } from 'quasar';
 
@@ -20,6 +23,9 @@ interface State {
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
+    failedAuthCount: 0,
+    refreshFailed: false,
+    showAuthErrorHint: false,
     showOverlayHint: false,
     emailVerified: false,
     emailVerifyError: false,
@@ -307,6 +313,7 @@ export const useAuthStore = defineStore('auth', {
     },
   },
   actions: {
+
     toggleApiKey: function () {
       if (this.showApiKey) {
         this.apiKey = this.apiKeyHidden;
@@ -458,29 +465,60 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     async fetchRefreshToken() {
-      try {
-        const tokenEndpoint = '/oauth/token';
-        const response = await axios.post(
-          process.env.APP_API_BASE_URL + tokenEndpoint,
-          {
-            grant_type: 'refresh_token',
-            refresh_token: this.refreshToken,
-            client_id: process.env.APP_CLIENT_ID,
-            client_secret: process.env.APP_CLIENT_SECRET,
-            scope: '', // Keep consistent with your login scope
-          }
-        );
-
-        this.setTokens(response.data.access_token, response.data.refresh_token);
-      } catch (e) {
-        this.logout();
-        console.log(e);
+      // Prevent multiple parallel refresh calls which otherwise overwhelm backend
+      if (refreshPromise) {
+        return refreshPromise;
       }
+
+      refreshPromise = new Promise<void>(async (resolve, reject) => {
+        try {
+          const tokenEndpoint = '/oauth/token';
+          const response = await axios.post(
+            process.env.APP_API_BASE_URL + tokenEndpoint,
+            {
+              grant_type: 'refresh_token',
+              refresh_token: this.refreshToken,
+              client_id: process.env.APP_CLIENT_ID,
+              client_secret: process.env.APP_CLIENT_SECRET,
+              scope: '',
+            }
+          );
+          this.setTokens(response.data.access_token, response.data.refresh_token);
+          this.refreshFailed = false;
+          this.failedAuthCount = 0;
+          resolve();
+        } catch (e) {
+          // mark refresh failure; further 401s will count towards logout threshold
+          this.refreshFailed = true;
+          this.logout();
+          console.error('Failed to refresh token', e);
+          reject(e);
+        } finally {
+          refreshPromise = null;
+        }
+      });
+
+      return refreshPromise;
     },
     setupAxiosInterceptors() {
       axios.interceptors.response.use(
-        (response) => response,
+        (response) => {
+          // reset failure counter on any successful response
+          this.failedAuthCount = 0;
+          this.refreshFailed = false;
+          this.showAuthErrorHint = false;
+          return response;
+        },
         async (error) => {
+          // Show immediate hint on first 401 irrespective of refresh flow
+          if (error.response && error.response.status === 401 && !this.showAuthErrorHint) {
+            this.showAuthErrorHint = true;
+            Notify.create({
+              message: this.i18n?.t?.('credentialsError') ?? 'Authentication required',
+              color: 'warning',
+              position: 'top',
+            });
+          }
           // The arrow function ensures 'this' refers to the store
           if (
             error.response &&
@@ -505,6 +543,30 @@ export const useAuthStore = defineStore('auth', {
               return Promise.reject(err);
             }
           } else {
+            if (error.response && error.response.status === 401) {
+              // Immediate hint (once)
+              if (!this.showAuthErrorHint) {
+                this.showAuthErrorHint = true;
+                Notify.create({
+                  message: this.i18n?.t?.('credentialsError') ?? 'Authentication required',
+                  color: 'warning',
+                  position: 'top',
+                });
+              }
+
+              // After a failed refresh count towards forced logout
+              if (this.refreshFailed) {
+                this.failedAuthCount += 1;
+                if (this.failedAuthCount >= 10) {
+                  Notify.create({
+                    message: this.i18n?.t?.('credentialsError') ?? 'Authentication required',
+                    color: 'negative',
+                    position: 'top',
+                  });
+                  this.logout();
+                }
+              }
+            }
             return Promise.reject(error);
           }
         }
@@ -573,6 +635,9 @@ export const useAuthStore = defineStore('auth', {
     logout() {
       this.clearTokens();
       this.reset();
+      this.failedAuthCount = 0;
+      this.refreshFailed = false;
+      this.showAuthErrorHint = false;
       this.router.push('/login');
     },
     async register() {

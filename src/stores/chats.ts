@@ -102,7 +102,14 @@ export const useChatsStore = defineStore({
   }),
   actions: {
     // Fetch all chats
-    async fetchChats(subject_uuid: string) {
+    async fetchChats(subject_uuid?: string) {
+      // Guard clause – we can not fetch chats without an id. This prevents
+      // requests like `/subject/undefined` that used to return an empty
+      // response.
+      if (!subject_uuid) {
+        return;
+      }
+
       this.chats = [];
       this.loading = true;
       try {
