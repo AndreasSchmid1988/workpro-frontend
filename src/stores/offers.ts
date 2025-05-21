@@ -85,6 +85,7 @@ export const useOffersStore = defineStore({
     searchTerm: '' as string,
     // list of products added to the current offer
     offerProducts: [] as any[],
+
     // loading state for offer products
     productLoading: false as boolean,
     pagination: {
@@ -271,14 +272,48 @@ export const useOffersStore = defineStore({
      * Add a product to the current offer.
      * @returns true on success, false on failure
      */
-    async addOfferProduct(productId: string, quantity: number): Promise<boolean> {
+    /**
+     * Add a product line item to the current offer.
+     *
+     * @param productId  ID of the product
+     * @param quantity   Quantity
+     * @param payload    Optional feature values payload
+     * @param price      Optional pre-calculated unit price (net)
+     * @param lineTotal  Optional total price (price * qty)
+     */
+    async addOfferProduct(
+      productId: string,
+      quantity: number,
+      payload?: Record<string, any>,
+      price?: number,
+      lineTotal?: number
+    ): Promise<boolean> {
       this.productLoading = true;
       try {
         const authStore = useAuthStore();
         const id = this.offer.id;
         await axios.post(
           `${process.env.APP_API_BASE_URL}/api/v1/offers/${id}/products`,
-          { offer_id: String(id), product_id: String(productId), quantity },
+          // Build payload dynamically so that undefined / null fields are not
+          // sent to the backend (avoids 422 validation errors when the backend
+          // wants to calculate price itself).
+          (() => {
+            const body: Record<string, any> = {
+              offer_id: String(id),
+              product_id: String(productId),
+              quantity,
+            };
+            if (payload && Object.keys(payload).length) {
+              body.payload = payload;
+            }
+            if (price !== undefined && price !== null) {
+              body.price = price;
+            }
+            if (lineTotal !== undefined && lineTotal !== null) {
+              body.line_total = lineTotal;
+            }
+            return body;
+          })(),
           {
             headers: {
               Authorization: `Bearer ${authStore.accessToken}`,

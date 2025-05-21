@@ -56,6 +56,7 @@ export default {
   payout: 'Payout',
   clicks: 'Clicks',
   total: 'Total',
+  area: 'Area',
   share: 'of total share',
   market: 'Market',
   shop: 'Shop',
@@ -87,6 +88,7 @@ export default {
   myProfile: 'My Profile',
   billing: 'Billing',
   logout: 'Logout',
+  details: 'Details',
   registrationSuccess: 'Registration was successful',
   verifyEmail: 'Please verify your email address',
   verifyingEmail: 'Email Verification',
@@ -152,6 +154,7 @@ export default {
   apiKeyRequired: 'API Key is required',
   reload: 'New version available.',
   refresh: 'refresh',
+  exportPdf: 'Export PDF',
   shopOverview: 'Store overview',
   onlyModified: 'Modified commissions',
   'Your email address is not verified.': 'Your email address is not verified.',
@@ -308,5 +311,9 @@ export default {
   price: 'Unit Price',
   quantity: 'Quantity',
   lineTotal: 'Line Total',
+  cancel: 'Cancel',
+  add: 'Add',
+  cancel: 'Cancel',
+  add: 'Add',
 
 };

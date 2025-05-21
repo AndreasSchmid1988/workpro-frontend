@@ -4,9 +4,12 @@ import { useRoute, useRouter } from 'vue-router';
 import { useOffersStore } from 'stores/offers';
 import { useProductsStore } from 'stores/products';
 import { useI18n } from 'vue-i18n';
+import ProductConfigurator from 'components/ProductConfigurator.vue';
 import SaveCreate from 'components/SaveCreateComponent.vue';
 import FileComponent from 'components/FileComponent.vue';
 import ChatComponent from 'components/ChatComponent.vue';
+import axios from 'axios';
+import { useAuthStore } from 'stores/auth';
 
 const route = useRoute();
 const router = useRouter();
@@ -46,13 +49,22 @@ const loadOfferData = async () => {
 // Product selection for line items
 const newProductId = ref<string | null>(null);
 const newProductQty = ref<number>(1);
-// add selected product to offer
-const addProduct = async () => {
-  if (!newProductId.value) {
-    return;
-  }
-  const success = await offersStore.addOfferProduct(newProductId.value, newProductQty.value);
-  // reset inputs only on successful addition
+// Dialog visibility for product configuration
+const showConfigurator = ref(false);
+// after product picked and '+' clicked, open configurator
+const openConfigurator = () => {
+  if (!newProductId.value) return;
+  showConfigurator.value = true;
+};
+
+const handleConfiguratorConfirm = async (data: any) => {
+  if (!newProductId.value) return;
+  // Übergebe nur quantity & payload – Preis wird im Backend berechnet.
+  const success = await offersStore.addOfferProduct(
+    newProductId.value,
+    data.quantity,
+    data.payload
+  );
   if (success) {
     newProductId.value = null;
     newProductQty.value = 1;
@@ -82,6 +94,30 @@ const updateOffer = async () => {
   }
 };
 
+// Export the current offer as a PDF via backend mpdf generator.
+const exportPdf = async () => {
+  if (!offerId.value) return;
+  try {
+    const auth = useAuthStore();
+    const response = await axios.get(
+      `${process.env.APP_API_BASE_URL}/api/v1/offers/${offerId.value}/download`,
+      {
+        headers: { Authorization: `Bearer ${auth.accessToken}` },
+        responseType: 'blob',
+      }
+    );
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `offer_${offerId.value}.pdf`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  } catch (e) {
+    console.error('Error exporting offer PDF:', e);
+  }
+};
+
 onMounted(async () => {
   // When the create-route is opened we immediately create a draft offer so
   // that related child components (file upload, chat, …) already have a valid
@@ -106,6 +142,18 @@ onMounted(async () => {
   // Ensure products for select list are always loaded.
   productsStore.fetchProducts();
 });
+
+/**
+ * Creates a short human-readable summary of the payload / feature values that
+ * were stored for a product line item. Example output:
+ *   "width: 1.2, height: 2.5, color: satiniert"
+ */
+function formatPayload(payload: Record<string, any>): string {
+  if (!payload) return '';
+  return Object.entries(payload)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(', ');
+}
 </script>
 
 <template>
@@ -196,7 +244,7 @@ onMounted(async () => {
                         <q-btn
                           color="primary"
                           label="+"
-                          @click="addProduct"
+                          @click="openConfigurator"
                           :disable="!newProductId"
                         />
                       </div>
@@ -219,6 +267,7 @@ onMounted(async () => {
                         <q-th>{{ t('price') }}</q-th>
                         <q-th>{{ t('quantity') }}</q-th>
                         <q-th>{{ t('lineTotal') }}</q-th>
+                        <q-th>{{ t('details') }}</q-th>
                         <q-th>{{ t('actions') }}</q-th>
                       </q-tr>
                     </template>
@@ -238,6 +287,22 @@ onMounted(async () => {
                         </q-td>
                         <q-td>{{ props.row.line_total }}</q-td>
                         <q-td>
+                          <span
+                            v-if="props.row.payload && Object.keys(props.row.payload).length"
+                            style="white-space: pre-wrap"
+                          >
+                            {{ formatPayload(props.row.payload) }}
+                          </span>
+                        </q-td>
+                        <q-td>
+                          <q-btn
+                            flat
+                            round
+                            dense
+                            icon="content_copy"
+                            @click="offersStore.addOfferProduct(props.row.product.id, props.row.quantity, props.row.payload, props.row.price, props.row.line_total)"
+                            class="q-mr-xs"
+                          />
                           <q-btn
                             flat
                             round
@@ -252,6 +317,12 @@ onMounted(async () => {
                   </q-table>
                 </div>
               </div>
+
+
+              <!-- Die Tabelle für Glas-Positionen war ein früherer Spezial-Fall und
+                   wird nun nicht mehr benötigt, weil Produkte generell als
+                   eigenständige Zeilenartikel mit individuellen Features über
+                   das Angebots-Modul gepflegt werden.  -->
               </q-card-section>
               <q-card-actions align="center">
                 <SaveCreate
@@ -261,11 +332,28 @@ onMounted(async () => {
                   @save-button-clicked="updateOffer"
                   @save-button-initiated-create="createOffer"
                 />
+                <q-btn
+                  flat
+                  color="primary"
+                  icon="picture_as_pdf"
+                  :label="t('exportPdf')"
+                  :disable="!offerId"
+                  @click="exportPdf"
+                  class="q-ml-md"
+                />
               </q-card-actions>
             </q-card>
           </div>
         </div>
       </div>
     </q-pull-to-refresh>
+
+    <!-- Product configurator dialog -->
+    <ProductConfigurator
+      v-model="showConfigurator"
+      :product-id="newProductId as string"
+      :quantity="newProductQty"
+      @confirmed="handleConfiguratorConfirm"
+    />
   </q-page>
 </template>

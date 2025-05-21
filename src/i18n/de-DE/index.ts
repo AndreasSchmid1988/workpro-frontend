@@ -59,6 +59,7 @@ export default {
   payout: 'Umsatz',
   clicks: 'Interessenten',
   total: 'Gesamt',
+  area: 'Fläche',
   share: 'Anteil gesamt',
   market: 'Typ',
   shop: 'Shop',
@@ -90,6 +91,7 @@ export default {
   myProfile: 'Mein Profil',
   billing: 'Rechnungsstellung',
   logout: 'Abmelden',
+  details: 'Details',
   registrationSuccess: 'Ihre Registrierung war erfolgreich',
   verifyEmail:
     'Sie erhalten in Kürze eine E-Mail zur Bestätigung Ihrer E-Mail-Adresse.',
@@ -149,6 +151,7 @@ export default {
   callingCode: 'Ländervorwahl',
   reload: 'Eine neue Version ist verfügbar.',
   refresh: 'aktualisieren',
+  exportPdf: 'PDF herunterladen',
   Email: 'E-Mail Adresse',
   Password: 'Passwort',
   apiKey: 'API Key',
@@ -316,5 +319,7 @@ export default {
   price: 'Stückpreis',
   quantity: 'Anzahl',
   lineTotal: 'Gesamtpreis',
+  cancel: 'Abbrechen',
+  add: 'Hinzufügen',
 
 };
